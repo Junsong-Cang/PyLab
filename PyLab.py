@@ -565,6 +565,7 @@ def Map(
     nx : timesteps per Width
     Precision : When to stop
     Max_Iteration : maximum iteration
+    Use_log_x : whether to check convergence using {\int dlnx f} or {\int dx f}, preferably true because sampling is done in log
     '''
 
     Boost = 3
