@@ -552,7 +552,7 @@ def Map(
         Precision = 1e-2,
         Max_Iteration = 50,
         Use_Booster = 0,
-        Use_log_x = 0,
+        Use_log_x = 1,
         Print_debug_MSG = False):
     '''
     Find converging profile of function F
