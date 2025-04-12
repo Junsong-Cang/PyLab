@@ -1,0 +1,17 @@
+Parameter autocorrelation lengths (effective number of samples N_eff = tot weight/weight length)
+
+            Weight Length   Sample length           N_eff
+p1               7.93E+02          792.82             175
+p2               8.48E+02          847.63             163
+p3               4.97E+02          497.37             279
+
+Split tests: rms_n([delta(upper/lower quantile)]/sd) n={2,3,4}, limit=95%:
+i.e. mean sample splitting change in the quantiles in units of the st. dev.
+
+p1           0.0228   0.0436   0.0374 upper
+p1           1.0629   1.3715   1.2999 lower
+p2           1.1541   1.3593   1.2567 upper
+p2           0.0122   0.0304   0.0395 lower
+p3           0.0125   0.0392   0.0571 upper
+p3           0.5526   1.1629   1.1871 lower
+
