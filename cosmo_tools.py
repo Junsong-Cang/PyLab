@@ -1163,7 +1163,7 @@ def PS2D_2_PS1D(
     '''
     # if len(kpe) == len(kpa) and PS_format == None: raise Exception('kpe and kpa has same size, I wont be able to auto-detect PS dimension')
     def Find_Index(x, xax):
-        # Find index of x in xax, if not in +-0.5dx then give nan
+        # Find index of x in xax (linear distributed), if not in +-0.5dx then give nan
         dx_left = xax[1] - xax[0]
         dx_right = xax[-1] - xax[-2]
         if x < xax[0] - dx_left/2 or x > xax[-1] + dx_right/2:
@@ -1194,15 +1194,10 @@ def PS2D_2_PS1D(
     
     # Get automatic k bins, ignored if OverWriteK
     lk1 = np.log10(k1)
-    if len(kpe) == len(kpa):
-        if np.sum((kpe - kpa)**2) < 1E-10:
-            k = 2**0.5 * kpe
-            auto_bin = np.log10(k)
-    else:
-        if binning == 'log':
-            auto_bin = np.linspace(np.min(lk1), np.max(lk1), nk)
-        elif binning == 'linear':
-            auto_bin = np.linspace(np.min(k1), np.max(k1), nk)
+    if binning == 'log':
+        auto_bin = np.linspace(np.min(lk1), np.max(lk1), nk)
+    elif binning == 'linear':
+        auto_bin = np.linspace(np.min(k1), np.max(k1), nk)
     
     if binning == 'log':
         lk2 = np.log10(newk) if OverWriteK else auto_bin
@@ -1238,8 +1233,7 @@ def Compute_nd_PS_t21c(
         do_2D = True,
         kbins_1D = np.logspace(-1.7, 0.5, 40),
         kbins_2D = [np.linspace(0.02, 0.6, 10), np.linspace(0.02, 0.6, 10)],
-        binning = 'log',
-        nk_1d = 50):
+        binning = 'log'):
     '''
     An EZ interface to compute 1D & 2D PS using tools21cm. The original is mature enough already, I am putting this here just so I know I have this
     ---- inputs ----
@@ -1247,24 +1241,42 @@ def Compute_nd_PS_t21c(
     box_length : length of box, list or array of form [BOX_LEN_1, BOX_LEN_2, BOX_LEN_3]
     do_1D : compute 1D spherical PS
     do_2D : compute 2D cylindrical PS
-    kbins_1D : array, k bins for 1D PS
+    kbins_1D : array, k bin centers for 1D PS
     kbins_2D : list for [k_perp, k_par], both k_perp and k_par are arrays
     binning : string, binning for k
         log
         linear
     nk_1d : 1D PS k length, not related to kbins_1D
     '''
-    print('Reminder: SKA DC k bins may need to be updated, see Adele slack message')
     out = {}
+    # Get k1d bin edges following Adele's advice, k must be linearly spaced
+    def Find_k_bin_edges(k_axis):
+        nk = len(k_axis)
+        dks = np.abs(k_axis[0:nk-1] - k_axis[1:nk])
+        dk_mean = np.mean(dks)
+        dk1 = dks[1]
+        if np.abs(1-dk1/dk_mean) > 1E-2:
+            print('Something is wrong with k2d axis')
+            print(dk1, dk_mean)
+            raise Exception('kbins_1D should be linearly spaced, dev version for SKA DC')
+        k_edges = np.linspace(np.min(k_axis) - dk_mean/2, np.max(k_axis) + dk_mean/2, nk + 1)
+        return k_edges
+    
     if do_2D:
+        # print('kbins_2D[0]:', kbins_2D[0])
+        kpe_edges = Find_k_bin_edges(kbins_2D[0])
+        kpa_edges = Find_k_bin_edges(kbins_2D[1])
         pk2d, kpe, kpa = t21c.power_spectrum.power_spectrum_2d(
             input_array = box, 
-            kbins = kbins_2D, 
+            kbins = [kpe_edges, kpa_edges], 
             binning = binning,
             box_dims = [box_length[0], box_length[1], box_length[2]],
             return_modes = False, 
             nu_axis = 2, 
             window=None)
+        # Check that returned kpe and kpa are the same as input
+        if np.mean(np.abs(1 - kpe/kbins_2D[0])) > 1E-2 or np.mean(np.abs(1 - kpa/kbins_2D[1])) > 1E-2:
+            raise Exception('Unexpected kpe and kpa bins')
         # ps2d is not dimensionless and it has index [kpe, kpa]
         ps2d = 0*pk2d
         for ide, kpe_ in enumerate(kpe):
@@ -1277,6 +1289,7 @@ def Compute_nd_PS_t21c(
         out['kpa'] = kpa
         
         # While we are at it, get 1D PS as well
+        # Currently this module is used for SKA DC which has linear binning
         k, ps1d = PS2D_2_PS1D(
             kpe = kpe,
             kpa = kpa,
@@ -1288,14 +1301,17 @@ def Compute_nd_PS_t21c(
         out['ps1d_derived'] = ps1d
         out['k1d_derived'] = k
     if do_1D:
+        k1d_bin_edges = Find_k_bin_edges(kbins_1D)
         PS, ks = t21c.power_spectrum.power_spectrum_1d(
             input_array_nd = box,
-            kbins = nk_1d, # can also be an array, e.g. kbins_1D
+            kbins = k1d_bin_edges,
             box_dims = [box_length[0], box_length[1], box_length[2]],
-            binning = binning)
+            binning = 'linear')
         PS = PS*ks**3/(2 * np.pi**2)
-        if binning == 'log': PS = np.interp(x = np.log(kbins_1D), xp = np.log(ks), fp = PS, left = np.nan, right = np.nan)
-        if binning == 'linear': PS = np.interp(x = kbins_1D, xp = ks, fp = PS, left = np.nan, right = np.nan)
+        #if binning == 'log': PS = np.interp(x = np.log(kbins_1D), xp = np.log(ks), fp = PS, left = np.nan, right = np.nan)
+        #if binning == 'linear': PS = np.interp(x = kbins_1D, xp = ks, fp = PS, left = np.nan, right = np.nan)
+        # At this point we should get kbins_1D as our k
+        if np.mean(np.abs(1 - kbins_1D/ks)) > 1E-2: raise Exception('Unexpected k')
         out['ps1d'] = PS
         out['k1d'] = kbins_1D
     return out
