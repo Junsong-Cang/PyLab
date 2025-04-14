@@ -1,10 +1,14 @@
 do_mcmc = 0
-ndim = 3
 FileRoot = 'data/arcade_'
 
-p1_info = {'name':'Tcmb', 'min':0, 'max':10, 'latex':'T_{\mathrm{cmb}}'}
-p2_info = {'name':'TR', 'min':0, 'max':10, 'latex':'T_{\mathrm{R}}'}
-p3_info = {'name':'Beta', 'min':-10, 'max':10, 'latex':'\\beta'}
+#p1_info = {'name':'Tcmb', 'min':0, 'max':10, 'latex':'T_{\mathrm{cmb}}'}
+#p2_info = {'name':'TR', 'min':0, 'max':10, 'latex':'T_{\mathrm{R}}'}
+#p3_info = {'name':'Beta', 'min':-10, 'max':10, 'latex':'\\beta'}
+infos = [
+  {'name':'Tcmb', 'min':0, 'max':10, 'latex':'T_{\mathrm{cmb}}'},
+  {'name':'TR', 'min':0, 'max':10, 'latex':'T_{\mathrm{R}}'},
+  {'name':'Beta', 'min':-10, 'max':10, 'latex':'\\beta'}]
+ndim = len(infos)
 
 import numpy as np
 from pymultinest.solve import solve
@@ -26,14 +30,9 @@ def model(Tcmb, TR, Beta):
   T = Tcmb + TR*(v/v0)**Beta
   return T
 
-def myprior(cube):
-	'''A flat prior'''
-	p1, p2, p3 = cube
-	p1 = p1*(p1_info['max']-p1_info['min']) + p1_info['min']
-	p2 = p2*(p2_info['max']-p2_info['min']) + p2_info['min']
-	p3 = p3*(p3_info['max']-p3_info['min']) + p3_info['min']
-	NewCube = [p1, p2, p3]
-	return NewCube
+def Flat_Prior(theta):
+  r = PL.Set_Uniform_Multinest_Prior(theta = theta, infos = infos)
+  return r
 
 def log_likelihood(theta):
   Tcmb, TR, Beta = theta
@@ -42,18 +41,19 @@ def log_likelihood(theta):
   t = model(Tcmb, TR, Beta)
   Chi2 = np.sum(((t-t0)/dt)**2)
   LnL = - Chi2/2
-  PL.SaySomething()
+  # PL.SaySomething()
   # time.sleep(0.0)
+  # print(LnL)
   return LnL
 
 if do_mcmc:
   t1 = time.time()
   result = solve(
       LogLikelihood = log_likelihood,
-      Prior=myprior, 
-	    n_dims=ndim,
-      outputfiles_basename=FileRoot,
-      n_live_points=100 * ndim,
+      Prior = Flat_Prior, 
+	    n_dims = ndim,
+      outputfiles_basename = FileRoot,
+      n_live_points = 100 * ndim,
       resume = False,
       verbose = True,
       n_iter_before_update = 10)
@@ -70,8 +70,7 @@ if do_mcmc:
   for name, col in zip(parameters, result['samples'].transpose()):
 	  print('%15s : %.3f +- %.3f' % (name, col.mean(), col.std()))
 else:
-  info = [p1_info, p2_info, p3_info]
-  PL.print_mcmc_info(FileRoot, info)
+  PL.print_mcmc_info(FileRoot, infos)
   z = np.linspace(4, 30, 40)
   def T_Arcade(theta):
     '''

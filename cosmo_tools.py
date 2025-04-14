@@ -627,7 +627,7 @@ def Compute_Optical_Depth(
     '''
     if z[0] > z[-1]:
         raise Exception('z needs to be increasing!')
-    warnings.warn('Module will soon be replaced by p21c.wrapper.compute_tau')
+    # warnings.warn('Module will soon be replaced by p21c.wrapper.compute_tau')
     
     nH = 0.1901567053460595*(1+z)**3
     sT = 0.665245854E-28
