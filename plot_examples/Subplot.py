@@ -24,6 +24,7 @@ fig.set_size_inches(8, 4)
 
 # if plots are more than one line use this:
 # axs[0, 0], axs[0, 1]
+
 axs[0].grid(True, which='major', linewidth = 0.2) # Show grid, if u wanna show both minor and major grid, use which='both'
 axs[0].plot(x, y1, 'k', linewidth = LineWidth, label='sin')
 axs[0].plot(x, y2, 'r', linewidth = LineWidth, label='cos')

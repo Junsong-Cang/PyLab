@@ -31,6 +31,7 @@ plt.rcParams['text.usetex'] = True
 x, y = np.meshgrid(xs, ys)
 
 fig,ax = plt.subplots()
+fig.set_size_inches(5, 4)
 c=ax.pcolor(x, y, z,cmap='jet',norm = LogNorm(vmin=z.min(), vmax=z.max()))
 # Use this for linear colorbar:
 # c=ax.pcolor(x, y, z,cmap='jet')

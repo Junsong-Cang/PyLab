@@ -1,36 +1,22 @@
-Root = '/Users/cangtao/FileVault/Projects/SKA_DC3/DataSet/PseudoLikelihood/data/PseudoLikelihood_'
-
-# ---- Initialise ----
-import getdist
-from getdist import plots
-import os
 import matplotlib.pyplot as plt
+import numpy as np
 
-# ---- Getdist Plot ----
-plt.rcParams.update({
-    'text.usetex': True,
-    'font.family':'Times',
-    'text.latex.preamble': r'\usepackage{newtxtext,newtxmath}'})
+n = 10000
+x = np.random.rand(n)
+y = np.random.rand(n)
+z = ((x - 0.2)**2 + y**2)**0.5
+# z = np.random.rand(n)  # This is your "likelihood"
 
-samples_1 = getdist.mcsamples.loadMCSamples(Root)
-p = samples_1.getParams()
+fig, axes = plt.subplots(2, 2, figsize=(10, 8), sharex=False, sharey=False)
 
-g = plots.getSubplotPlotter(subplot_size = 3)
-g.settings.axes_fontsize=14
-g.settings.title_limit_fontsize = 12
-g.settings.lab_fontsize =14
-g.settings.axes_labelsize = 14 # Size of axis label
-g.settings.legend_fontsize = 14 # Legend size
+# Create scatter plots
+for id1 in [0, 1]:
+    for id2 in [0, 1]:
+        sc = axes[id1, id2].scatter(x, y, c=z, cmap='viridis', s = 0.2)
+        cbar = fig.colorbar(sc, ax=axes[id1, id2], shrink = 0.9, pad = 0.01)
+        
 
-g.triangle_plot(
-    samples_1,
-    width_inch=12,
-    contour_colors=['blue'],
-    # legend_labels=['EDGES','EDGES + Arcade'],
-    filled = True,
-    line_args=[{'lw':1.5,'ls':'-', 'color':'k'}],
-    title_limit = 2,
-    )
+# Add a single shared colorbar
 
 plt.tight_layout()
 plt.savefig('/Users/cangtao/Desktop/tmp.pdf')

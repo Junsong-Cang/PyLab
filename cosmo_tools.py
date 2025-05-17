@@ -1152,7 +1152,7 @@ def PS2D_2_PS1D(
         0 - no refining, give raw k and ps
         1 - use refining, e.g. ps modes for k in [0.5, 1.5] are assigned to k=1
     OverWriteK : use k provided in newk for binning
-    newk : costume k for binning
+    newk : costume k bin centers
     nk : if not OverWriteK (auto-set k), this is number of k bins
     PS_format : string, PS 2D index
         t21ct - PS[idx_kpe, idx_kpa], like tools_21cm / py21cmfast_tools outputs
@@ -1210,6 +1210,7 @@ def PS2D_2_PS1D(
                 psk2[idx_min] += psk1[idx]
                 count[idx_min] += 1
         psk2 = psk2/count
+        if True in np.isnan(psk2): raise Exception("ps is nan, count = {:.0f}".format(count[idx_min]))
         k2 = 10**lk2
     elif binning == 'linear':
         k2 = newk if OverWriteK else auto_bin
@@ -1223,7 +1224,6 @@ def PS2D_2_PS1D(
                 count[idx_min] += 1
         psk2 = psk2/count
         if True in np.isnan(psk2): raise Exception("ps is nan, count = {:.0f}".format(count[idx_min]))
-    
     return k2, psk2
 
 def Compute_nd_PS_t21c(

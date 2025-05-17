@@ -43,7 +43,9 @@ from scipy.interpolate import InterpolatedUnivariateSpline as spline
 from joblib import Parallel, delayed
 from PIL import Image
 from scipy import interpolate
+import scipy
 import matplotlib.pyplot as plt
+import scipy.stats
 try:
     import tqdm
 except:
@@ -1256,7 +1258,7 @@ def Interp_2D(Tab, x_axis, y_axis, x_target, y_target, Use_Log_X = False, Use_Lo
         r = 10**r
     return r
 
-def Within_Range(x, x_array):
+def Within_Range(x, x_array, error = 0):
     '''
     Check whether x is within the range of x_array,
     might be useful for interpolation
@@ -1265,7 +1267,7 @@ def Within_Range(x, x_array):
     
     xmin = np.min(x_array)
     xmax = np.max(x_array)
-    if x < xmin or x > xmax:
+    if x < xmin - error or x > xmax + error:
         r = False
     else:
         r = True
@@ -1446,6 +1448,8 @@ def derived_param_chains(
     prior_min : minimum of prior, can be array or scalar
     prior_max : maximum of prior, can be array or scalar
     ncpu : number of cpus for computing the new samples
+    write_names:
+        write latex names using infos in derived_names
     show_status : whether or not to show status
     '''
     
@@ -2004,12 +2008,9 @@ def Get_Numerical_Passwd(n):
     Get a random passwd key string made of random numbers
     n : passwd length
     '''
+    r = "passwd_"
     for idx in np.arange(0, n):
-        rd = str(np.random.randint(0, 10))
-        if idx==0:
-            r = rd
-        else:
-            r = r + rd
+        r += "{:.0f}".format(np.random.randint(0, 10))
     return r
 
 def Read_MultiNest_BestFit(
@@ -2180,7 +2181,7 @@ def h5disp(filename, show_att = 1):
     hdf = h5py.File(filename, 'r')
     hdf.visititems(print_structure)
 
-def count_stats_1D(x):
+def count_stats_1D(x, nbin = 100):
     '''
     Get 95% C.I. lower and upper limits + mean
     '''
@@ -2199,8 +2200,15 @@ def count_stats_1D(x):
     x2 = x1[dn:nx-dn]
     x_L68 = np.min(x2)
     x_T68 = np.max(x2)
-
-    r = {'mean': x_mean, 'L95': x_L95, 'T95': x_T95, 'L68': x_L68, 'T68': x_T68}
+    
+    # Get distribution peak too
+    kde = scipy.stats.gaussian_kde(x)
+    if len(x) < 2*nbin:
+        raise Exception('nbin too large / sample too small for KDE')
+    xax = np.linspace(np.min(x), np.max(x), nbin)
+    PDF = kde(xax)
+    peak = xax[np.argmax(PDF)]
+    r = {'mean': x_mean, 'L95': x_L95, 'T95': x_T95, 'L68': x_L68, 'T68': x_T68, 'peak': peak}
     return r
 
 def count_stats_2D(x):
@@ -2215,6 +2223,7 @@ def count_stats_2D(x):
     T95 = np.zeros(nx)
     L68 = np.zeros(nx)
     T68 = np.zeros(nx)
+    peak = np.zeros(nx)
 
     for idx in np.arange(0, nx):
         stat = count_stats_1D(x[:, idx])
@@ -2223,6 +2232,29 @@ def count_stats_2D(x):
         T95[idx] = stat['T95']
         L68[idx] = stat['L68']
         T68[idx] = stat['T68']
+        peak[idx] = stat['peak']
         
-    r = {'mean': mean, 'L95': L95, 'T95': T95, 'L68': L68, 'T68': T68}
+    r = {'mean': mean, 'L95': L95, 'T95': T95, 'L68': L68, 'T68': T68, 'peak': peak}
     return r
+
+def distribute_MPI_Jobs(n_jobs, mpi_size, mpi_rank):
+    '''
+    Find indexes for mpi_rank when running multiple jobs
+    Requires: 1. indexes cover all jobs; 2. index length for each rank can be dif only by up to 1 -> maximizes efficiency
+    -- inputs --
+    n_jobs:
+        number of jobs
+    mpi_size:
+        total size of MPI processes
+    mpi_rank:
+        Current MPI rank
+    '''
+    dn = int(n_jobs/mpi_size)
+    dns = dn*np.ones(mpi_size)
+    if n_jobs < mpi_size:
+        raise Exception('Not enough jobs to launch MPI, try using less MPI processes')
+    for idx in np.arange(0, mpi_size):
+        if np.sum(dns) < n_jobs:
+            dns[idx] = dns[idx] + 1
+    indexs = np.arange(np.sum(dns[0:mpi_rank]), np.sum(dns[0:mpi_rank+1]), dtype=int)
+    return indexs
