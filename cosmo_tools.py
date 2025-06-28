@@ -109,13 +109,9 @@ def PowerSpectra_Coeval_Kernel(
         ignore_k_zero = True)
     Ps=Pk * k ** 3 / (2 * np.pi ** 2)
     # remove nan
-    NanIdx = []
-    NanCheck = np.isnan(Ps)
-    for kid in np.arange(0, len(k)):
-        if NanCheck[kid]:
-            NanIdx.append(kid)
-    k = np.delete(k, NanIdx)
-    Ps = np.delete(Ps, NanIdx)
+    nan_mask = ~np.isnan(Ps)
+    k = k[nan_mask]
+    Ps = Ps[nan_mask]
     f.close()
     return k, Ps
     
@@ -843,7 +839,7 @@ def get_lc_redshifts(lc):
         z[idx] = d2z(d[idx])
     return z
 
-def Get_P21c_Coeval_cache_PS(path, cleanup, nk, output_file, field=0, show_status = 0):
+def Get_P21c_Coeval_cache_PS(path, cleanup, nk, output_file = None, field=0, show_status = 0):
     '''
     Get PS from cached coevals
     -- inputs --
@@ -878,49 +874,41 @@ def Get_P21c_Coeval_cache_PS(path, cleanup, nk, output_file, field=0, show_statu
         Tail = file[-3]+file[-2]+file[-1]
         if Head == Heads[field] and Tail == '.h5':
             FL.append(path+file)
-    z0 = []
-    k2D = []
-    PS0 = []
-    nf = len(FL)
+    zax = []
+    PS_ax = []
     #for fid, file in enumerate(FL):
     for fid in tqdm.tqdm(range(len(FL)), desc = 'Computing Coeval PS', disable = not show_status):
         file = FL[fid]
-        k_, PS_ = PowerSpectra_Coeval_Kernel(Field=field,nk=nk, Use_LogK=True, DataFile=file)
-        f = h5py.File(file, 'r')
-        redshift = f.attrs['redshift']
-        f.close()
-        k2D.append(k_)
-        PS0.append(PS_)
-        z0.append(redshift)
-    # All PS should have same k I think but let's check
-    for idx in np.arange(0, nf-1):
-        k1 = k2D[idx]
-        k2 = k2D[idx+1]
-        dif = np.sum(np.abs(k1-k2))
-        if dif > 1e-50:
-            raise Exception('Some coeval PS has different k')
-    # Now let's sort them into same format as p21c_ps_kernel
-    z_ax_0 = np.array(z0)
-    k_ax = k_
-    z_ax = np.sort(z_ax_0)
-    nz = len(z_ax)
-    nk_ = len(k_ax)
-    PS = np.zeros([nz,nk_])
-    for idx in np.arange(0, nz):
-        z = z_ax[idx]
-        idx0 = np.argmin(np.abs(z-z_ax_0))
-        PS[idx, :] = PS0[idx0][:]
+        if fid==0:
+            k, PS = PowerSpectra_Coeval_Kernel(Field=field,nk=nk, Use_LogK=True, DataFile=file)
+        else:
+            k_, PS = PowerSpectra_Coeval_Kernel(Field=field,nk=nk, Use_LogK=True, DataFile=file)
+            # Do some additional checks to ensure that k_ is the same as k
+            if np.sum(np.abs(k-k_)) > 1e-20:
+                raise Exception('Some coeval PS has different k')
+        PS_ax.append(PS)
+        with h5py.File(file, 'r') as f:
+            zax.append(f.attrs['redshift'])
+    # Sort PS
+    zax = np.array(zax)
+    PS_ax = np.array(PS_ax)
+    sorted_idx = np.argsort(zax)
+    zax = zax[sorted_idx]
+    PS_ax = PS_ax[sorted_idx, :]
+    
     # Now save results to file
-    if output_file[-1] == 'z':
-        # npz file
-        np.savez(output_file, z=z_ax, k = k_ax, ps=PS)
-    else:
-        # h5 file
-        f = h5py.File(output_file, 'w')
-        f.create_dataset('Coeval_Power_Spectrum/z', data = z_ax)
-        f.create_dataset('Coeval_Power_Spectrum/k', data = k_ax)
-        f.create_dataset('Coeval_Power_Spectrum/PS', data =PS)
-        f.close()
+    if not output_file is None:
+        if output_file[-1] == 'z':
+            # npz file
+            np.savez(output_file, z=zax, k = k, ps=PS_ax)
+        else:
+            # h5 file
+            f = h5py.File(output_file, 'w')
+            f.create_dataset('Coeval_Power_Spectrum/z', data = zax)
+            f.create_dataset('Coeval_Power_Spectrum/k', data = k)
+            f.create_dataset('Coeval_Power_Spectrum/PS', data =PS_ax)
+            f.close()
+    
     # now cleanup
     if cleanup == 1:
         for file in Files:
@@ -935,7 +923,7 @@ def Get_P21c_Coeval_cache_PS(path, cleanup, nk, output_file, field=0, show_statu
             if Tail == '.h5':
                 if not Head == 'Bri':
                     os.remove(path+file)
-    result = {'z': z_ax, 'k' : k_ax, 'ps' : PS}
+    result = {'z': zax, 'k' : k, 'ps' : PS_ax}
     return result
 
 def Get_p21c_lc_cube_redshifts(lc):

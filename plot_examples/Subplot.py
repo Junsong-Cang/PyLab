@@ -12,10 +12,6 @@ y2 = np.cos(x)
 y3 = np.exp(-x**2)
 
 # Set axis font and LaTex
-plt.rcParams.update({
-    'text.usetex': True,
-    'font.family':'Times',
-    'text.latex.preamble': r'\usepackage{newtxtext,newtxmath}'})
 
 # Set plot number
 fig, axs = plt.subplots(1, 2, sharex = False, sharey = False)

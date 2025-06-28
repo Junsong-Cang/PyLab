@@ -281,6 +281,7 @@ def mcmc_derived_stat(
             prior_min = None,
             prior_max = None,
             ncpu = ncpu,
+            write_names = False,
             show_status = print_status)
     RawChain = np.loadtxt(FileRoot+'.txt')
     RawSize = np.shape(RawChain)
@@ -2013,54 +2014,6 @@ def Get_Numerical_Passwd(n):
         r += "{:.0f}".format(np.random.randint(0, 10))
     return r
 
-def Read_MultiNest_BestFit(
-        Root = '/Users/cangtao/FileVault/Projects/Radio_Excess_EDGES/data/276_FG7_Tcal_LogST/276_FG7_Tcal_LogST_',
-        n_derived = 0):
-    '''
-    Read best-fit params from MultiNest stat file
-    '''
-    warnings.warn('This function will soon be deappreciated, use Read_MultiNest_Stats hereafter')
-    def count_lines(DataFile):
-        # Check how many lines a file has
-        with open(DataFile, 'r') as file:
-            line_count = 0
-            for line in file:
-                line_count += 1
-        return line_count
-    
-    ChainFile = Root+'.txt'
-    StatFile = Root+'stats.dat'
-    Chain = np.loadtxt(ChainFile)
-    ChainShape = np.shape(Chain)
-    if len(ChainShape) < 2:
-        # Highly unlikely but chain may have only 1 sample
-        dim = ChainShape[0] - 2 - n_derived
-    else:
-        dim = Chain.shape[1]-2 - n_derived
-    StatLen = count_lines(StatFile)
-    skipped_line = StatLen - dim
-    Stats = np.loadtxt(StatFile, skiprows = skipped_line)
-    
-    # Check that DIMs are expected
-    DIMS = Stats[:,0]
-    DIMS_Expected = np.linspace(1, dim, dim)
-    dif = np.sum(np.abs(DIMS_Expected - DIMS))
-    if dif > 1e-20:
-        raise Exception('Unexpected dimension for loaded stats')
-    MAP_active = Stats[:,1] # MAP for actively fit params
-    if n_derived == 0:
-        return MAP_active
-    # We have derived params, find best-match for MAP and their derived params
-    ChainShape = np.shape(Chain)
-    dist = np.zeros(ChainShape[0])
-    for idx in np.arange(0, ChainShape[0]):
-        dist[idx]=0
-        for pid, pmap in enumerate(MAP_active):
-            dist[idx] = dist[idx] + (pmap - Chain[idx,2+pid])**2
-    idx_min = np.argmin(dist)
-    MAP_All = Chain[idx_min, 2:ChainShape[1]]
-    return MAP_All
-
 def Print_UntraFast_info(result, LogPath):
     LnZ_DataFile = LogPath+'Bayesian_Evidence.dat'
     str1 = 'LnZ        LnZ_Err'
@@ -2173,11 +2126,11 @@ def h5disp(filename, show_att = 1):
             count = 0
             if show_att:
                 for k in obj.attrs:
-                    if count == 0: print('---- Attributes ----')
+                    if count == 0: print('    Attributes')
                     count += 1
-                    print('   ' + k + ' :', obj.attrs[k])
+                    print('        ' + k + ' :', obj.attrs[k])
         elif isinstance(obj, h5py.Dataset):
-            print(f"Dataset: {name}\n    Shape: {obj.shape}\n    Data Type: {obj.dtype}")
+            print(f"    Dataset: {name}\n         Shape: {obj.shape}\n          Type: {obj.dtype}")
     hdf = h5py.File(filename, 'r')
     hdf.visititems(print_structure)
 

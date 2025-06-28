@@ -11,4 +11,4 @@ for idx in tqdm.tqdm(range(1000), desc = 'doing cool stuff', disable = not show_
 def Sleep(index):
     time.sleep(0.001)
 
-DerivedSamples = Parallel(n_jobs=10)(delayed(Sleep)(idx) for idx in tqdm.tqdm(range(1000), desc = 'doing cool stuff', disable = not show_status))
+swap = Parallel(n_jobs=10)(delayed(Sleep)(idx) for idx in tqdm.tqdm(range(1000), desc = 'doing cool stuff', disable = not show_status))
