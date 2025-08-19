@@ -1348,7 +1348,10 @@ def HyRec(
     Pann = 1e-28,
     Use_SSCK = 0,
     DM_Channel = 0,
-    mdm = 100.0):
+    mdm = 100.0,
+    PBH_Model = 2,
+    mbh = 1E15,
+    fbh = 0.0):
     if os.getenv('COSMOMC_PATH') is not None:
         HyRec_Path = os.getenv('COSMOMC_PATH')+'HyRec/'
     else:
@@ -1367,13 +1370,13 @@ def HyRec(
         '0',
         '----PBH_Parameters----',
         'PBH_Model',
-        '1',
+        str(int(PBH_Model)),
         'PBH_Distribution',
         '1',
         'Mbh',
-        '1E3',
+        "{0:.4E}".format(mbh),
         'fbh',
-        '0',
+        "{0:.4E}".format(fbh),
         'PBH_Lognormal_Sigma',
         '1',
         'PBH_PWL_Mmax',

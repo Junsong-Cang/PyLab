@@ -25,7 +25,7 @@ Constants = {
     'hbar' : 1.0545718002693302e-34, # Reduced Planck Constant
     'Q' : 1.602176634E-19, # Electrical Charge Quanta
     'Elec_Mass_eV' : 510998.9461, # Electron mass in eV
-    'c' : 299792458, # Speed of light in m/s
+    'c' : 2.99792458E8, # Speed of light in m/s
     'Mpc' : 3.086E22, # Mpc in m
     'pc' : 3.086E16, # pc in m
     'msun' : 1.98847E30, # Solar mass in kg
