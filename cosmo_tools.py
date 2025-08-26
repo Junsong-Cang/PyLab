@@ -1445,6 +1445,7 @@ def Run_21cmFirstCLASS(
         'J_Lya_box', # Lyman alpha flux 
         'Tk_box', # baryon kinetic temperature
         'Ts_box', # baryon spin temperature
+        'xH_box', 
         'T_chi_box', # SDM temperature
         'V_chi_b_box') # Relative velocity between baryons and SDM
     lightcone_quantities = ("brightness_temp",) # brightness temperature
