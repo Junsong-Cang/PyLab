@@ -1,0 +1,7 @@
+Curve_Data/
+bak/
+examples/MultiNest/data/
+tmp.py
+test.py
+__pycache__/
+examples/UltraNest/data/
