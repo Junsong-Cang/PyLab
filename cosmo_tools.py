@@ -1400,7 +1400,7 @@ def Run_21cmFirstCLASS(
         zmax = 10,
         SDM_TARGET_TYPE = 'BARYONS',
         verbose = 1,
-        MANY_Z_SAMPLES_AT_COSMIC_DAWN = False,
+        # MANY_Z_SAMPLES_AT_COSMIC_DAWN = False,
         N_THREADS = 1,
         datafile = None
     ):
@@ -1417,7 +1417,7 @@ def Run_21cmFirstCLASS(
         'SDM_TARGET_TYPE' : SDM_TARGET_TYPE,
         'SCATTERING_DM' : True,
         'FUZZY_DM' : False,
-        'MANY_Z_SAMPLES_AT_COSMIC_DAWN': MANY_Z_SAMPLES_AT_COSMIC_DAWN,
+        # 'MANY_Z_SAMPLES_AT_COSMIC_DAWN': MANY_Z_SAMPLES_AT_COSMIC_DAWN,
         }
     flag_options = {'USE_MINI_HALOS': False, } # if False, popIII stars are not included - Note: if set to True, the runtime increases significantly!
     # cosmo params with PLK18
@@ -1470,8 +1470,26 @@ def Run_21cmFirstCLASS(
         'Tk' :  lc.global_Tk,
         'Ts' :  lc.global_Ts,
         'Tx' : lc.global_T_chi, 
+        'xH' :  lc.global_xHI,
     }
     if not datafile is None:
         # For some reasons lc.save doesn't work?
-        np.savez(datafile, z = lc.node_redshifts, Tb = lc.global_brightness_temp, Tk = lc.global_Tk, Ts = lc.global_Ts, Tx = lc.global_T_chi)
+        if datafile[-1] == 'z':
+            np.savez(datafile, z = lc.node_redshifts, Tb = lc.global_brightness_temp, Tk = lc.global_Tk, Ts = lc.global_Ts, Tx = lc.global_T_chi, )
+        else:
+            with h5py.File(datafile, 'w') as h5:
+                h5.create_dataset('z', data = np.array(lc.node_redshifts), dtype = 'float32')
+                h5.create_dataset('Tb', data = np.array(lc.global_brightness_temp), dtype = 'float32')
+                h5.create_dataset('Tk', data = np.array(lc.global_Tk), dtype = 'float32')
+                h5.create_dataset('Ts', data = np.array(lc.global_Ts), dtype = 'float32')
+                h5.create_dataset('Tx', data = np.array(lc.global_T_chi), dtype = 'float32')
+                h5.create_dataset('xH', data = np.array(lc.global_xHI), dtype = 'float32')
+                
+                h5.attrs['F_STAR10'] = F_STAR10
+                h5.attrs['F_ESC10'] = F_ESC10
+                h5.attrs['L_X'] = L_X
+                h5.attrs['mdm'] = mdm
+                h5.attrs['sigma_chi'] = sigma
+                h5.attrs['BOX_LEN'] = BOX_LEN
+                h5.attrs['HII_DIM'] = HII_DIM
     return result
