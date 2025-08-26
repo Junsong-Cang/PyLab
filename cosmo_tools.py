@@ -1471,12 +1471,26 @@ def Run_21cmFirstCLASS(
         'Tk' :  lc.global_Tk,
         'Ts' :  lc.global_Ts,
         'Tx' : lc.global_T_chi, 
-        'xH' :  lc.global_xHI,
+        'xH' :  lc.global_xH,
     }
     if not datafile is None:
         # For some reasons lc.save doesn't work?
         if datafile[-1] == 'z':
-            np.savez(datafile, z = lc.node_redshifts, Tb = lc.global_brightness_temp, Tk = lc.global_Tk, Ts = lc.global_Ts, Tx = lc.global_T_chi, )
+            np.savez(
+                datafile,
+                z = lc.node_redshifts,
+                Tb = lc.global_brightness_temp,
+                Tk = lc.global_Tk,
+                Ts = lc.global_Ts,
+                Tx = lc.global_T_chi,
+                xH = lc.global_xH,
+                F_STAR10 = F_STAR10,
+                F_ESC10 = F_ESC10,
+                L_X = L_X,
+                mdm = mdm,
+                sigma_dm = sigma,
+                BOX_LEN = BOX_LEN,
+                HII_DIM = HII_DIM)
         else:
             with h5py.File(datafile, 'w') as h5:
                 h5.create_dataset('z', data = np.array(lc.node_redshifts), dtype = 'float32')
@@ -1484,13 +1498,13 @@ def Run_21cmFirstCLASS(
                 h5.create_dataset('Tk', data = np.array(lc.global_Tk), dtype = 'float32')
                 h5.create_dataset('Ts', data = np.array(lc.global_Ts), dtype = 'float32')
                 h5.create_dataset('Tx', data = np.array(lc.global_T_chi), dtype = 'float32')
-                h5.create_dataset('xH', data = np.array(lc.global_xHI), dtype = 'float32')
+                h5.create_dataset('xH', data = np.array(lc.global_xH), dtype = 'float32')
                 
                 h5.attrs['F_STAR10'] = F_STAR10
                 h5.attrs['F_ESC10'] = F_ESC10
                 h5.attrs['L_X'] = L_X
                 h5.attrs['mdm'] = mdm
-                h5.attrs['sigma_chi'] = sigma
+                h5.attrs['sigma_dm'] = sigma
                 h5.attrs['BOX_LEN'] = BOX_LEN
                 h5.attrs['HII_DIM'] = HII_DIM
     
