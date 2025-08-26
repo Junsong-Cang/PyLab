@@ -1492,4 +1492,5 @@ def Run_21cmFirstCLASS(
                 h5.attrs['sigma_chi'] = sigma
                 h5.attrs['BOX_LEN'] = BOX_LEN
                 h5.attrs['HII_DIM'] = HII_DIM
+    
     return result
