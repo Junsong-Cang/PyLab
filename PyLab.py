@@ -1337,11 +1337,15 @@ def Get_dydx(
 
 def SaySomething(
         File = '/Users/cangtao/Desktop/tmp.txt',
-        MSG = '----'):
+        MSG = '----',
+        overwrite = 0):
     '''
     Say something to the File, useful for MPI status monitor
     '''
-    cmd = 'echo ' + MSG + ' >> ' + File
+    if overwrite:
+        cmd = 'echo ' + MSG + ' > ' + File
+    else:
+        cmd = 'echo ' + MSG + ' >> ' + File
     os.system(cmd)
 
 def HyRec(

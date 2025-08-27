@@ -35,7 +35,10 @@ except:
 
 from scipy.interpolate import InterpolatedUnivariateSpline as spline
 from Useful_Numbers import Cosmology as cosmo
-from echo21 import echopipeline
+try:
+    from echo21 import echopipeline
+except:
+    pass
 
 class P21c_PS_overflow(Exception):
     def __init__(self, z, zmin, zmax):
@@ -1390,8 +1393,8 @@ def Run_echo21(
     return result
 
 def Run_21cmFirstCLASS(
-        F_STAR10 = -1.25,
-        F_ESC10 = -1.35,
+        F_STAR10 = -1.301,
+        F_ESC10 = -1.0,
         L_X = 40.5,
         mdm = -3,
         sigma = -200,
@@ -1407,7 +1410,17 @@ def Run_21cmFirstCLASS(
     '''
     An interface to 21cmFirstCLASS, all params are entered in log10
     mdm : DM mass in GeV
-    sigma45 : sigma / (v/c)^{-4}, in 10^{-45} cm^2
+    sigma : sigma / (v/c)^{-4}, in cm^2
+    zmax : maximum z in simulation
+    SDM_TARGET_TYPE: particles that DM scatters with
+        BARYONS (all the baryons)
+        IONIZED (free protons and electrons)
+        HYDROGEN (hydrogen nuclei, neutralized or not)
+        PROTONS (free protons)
+        ELECTRONS (free electrons)
+    verbose: print out useful debug and dev info (run time, etc)?
+    N_THREADS: number of cpu per run
+    datafile: if not None, this is the data file to save results. lc.save doesn't seem to be working but it's not very disk efficient anyway if we don't want lc
     '''
     ncpu = 1 if platform.system() == 'Darwin' else N_THREADS # M-chip Mac cannot do mpi
     user_params = {
@@ -1418,9 +1431,14 @@ def Run_21cmFirstCLASS(
         'SCATTERING_DM' : True,
         'FUZZY_DM' : False,
         # 'MANY_Z_SAMPLES_AT_COSMIC_DAWN': MANY_Z_SAMPLES_AT_COSMIC_DAWN,
-        }
-    flag_options = {'USE_MINI_HALOS': False, } # if False, popIII stars are not included - Note: if set to True, the runtime increases significantly!
-    # cosmo params with PLK18
+        # Other background params
+        'USE_INTERPOLATION_TABLES': True}
+    flag_options = {
+        'USE_MINI_HALOS': False, 
+        'USE_MASS_DEPENDENT_ZETA': True,
+        'INHOMO_RECO': True,
+        'USE_TS_FLUCT': True}
+    # Cosmo params with PLK18
     cosmo_params = {
         'hlittle': 0.6766, # hubble parameter
         'OMb': 0.04897468161, # baryon density
@@ -1432,14 +1450,19 @@ def Run_21cmFirstCLASS(
         'sigma_SDM' : -sigma, # -log10[sigma / (v/c)^{-4} / cm^2]
         'f_chi' : 0, # fraction of SDM. This is in fact -log_10(f_chi), thus we simulate here SDM with a fraction of 100%
         'SDM_INDEX' : -4, # index of the SDM cross-section. Note that it doesn't have to be an integer!
-        }
+    }
     astro_params = {
         'F_STAR10': F_STAR10, # star formation efficiency (atomic cooling galaxies) for pivot mass 1e10 Msun (log10)
         'ALPHA_STAR': 0.5, # slope of the dependency of star formation efficiency on the host halo mass 
         'F_ESC10': F_ESC10, # escape fraction of Lyman photons into the IGM for pivot mass 1e10 Msun (log10)
-        'ALPHA_ESC': -0.3, # slope of the dependency of escape fraction on the host halo mass 
-        'L_X': L_X} # X-ray luminosity (log10)
-
+        'ALPHA_ESC': -0.5, # slope of the dependency of escape fraction on the host halo mass 
+        'L_X': L_X,
+        'NU_X_THRESH': 500.0,
+        't_STAR': 0.5,
+        'M_TURN': 8.7,
+        'X_RAY_SPEC_INDEX': -0.5,# X-ray luminosity (log10)
+    }
+    
     global_quantities = (
         'brightness_temp', # brightness temperature
         'J_Lya_box', # Lyman alpha flux 
@@ -1507,5 +1530,4 @@ def Run_21cmFirstCLASS(
                 h5.attrs['sigma_dm'] = sigma
                 h5.attrs['BOX_LEN'] = BOX_LEN
                 h5.attrs['HII_DIM'] = HII_DIM
-    
     return result
