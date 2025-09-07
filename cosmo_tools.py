@@ -1405,7 +1405,8 @@ def Run_21cmFirstCLASS(
         verbose = 1,
         # MANY_Z_SAMPLES_AT_COSMIC_DAWN = False,
         N_THREADS = 1,
-        datafile = None
+        datafile = None,
+        save_lc = 0
     ):
     '''
     An interface to 21cmFirstCLASS, all params are entered in log10
@@ -1496,24 +1497,50 @@ def Run_21cmFirstCLASS(
         'Tx' : lc.global_T_chi, 
         'xH' :  lc.global_xH,
     }
+    z_lc = lc.lightcone_redshifts
+    Tb_lc = lc.brightness_temp
+    mask = z_lc < 40.1
+    z_lc = z_lc[mask]
+    Tb_lc = Tb_lc[:,:,mask]
+    Tb_lc = np.array(Tb_lc).astype(np.float32)
+                
     if not datafile is None:
         # For some reasons lc.save doesn't work?
         if datafile[-1] == 'z':
-            np.savez(
-                datafile,
-                z = lc.node_redshifts,
-                Tb = lc.global_brightness_temp,
-                Tk = lc.global_Tk,
-                Ts = lc.global_Ts,
-                Tx = lc.global_T_chi,
-                xH = lc.global_xH,
-                F_STAR10 = F_STAR10,
-                F_ESC10 = F_ESC10,
-                L_X = L_X,
-                mdm = mdm,
-                sigma_dm = sigma,
-                BOX_LEN = BOX_LEN,
-                HII_DIM = HII_DIM)
+            if save_lc:
+                np.savez(
+                    datafile,
+                    z = lc.node_redshifts,
+                    Tb = lc.global_brightness_temp,
+                    Tk = lc.global_Tk,
+                    Ts = lc.global_Ts,
+                    Tx = lc.global_T_chi,
+                    xH = lc.global_xH,
+                    Tb_lc = Tb_lc,
+                    z_lc = z_lc,
+                    F_STAR10 = F_STAR10,
+                    F_ESC10 = F_ESC10,
+                    L_X = L_X,
+                    mdm = mdm,
+                    sigma_dm = sigma,
+                    BOX_LEN = BOX_LEN,
+                    HII_DIM = HII_DIM)
+            else:
+                np.savez(
+                    datafile,
+                    z = lc.node_redshifts,
+                    Tb = lc.global_brightness_temp,
+                    Tk = lc.global_Tk,
+                    Ts = lc.global_Ts,
+                    Tx = lc.global_T_chi,
+                    xH = lc.global_xH,
+                    F_STAR10 = F_STAR10,
+                    F_ESC10 = F_ESC10,
+                    L_X = L_X,
+                    mdm = mdm,
+                    sigma_dm = sigma,
+                    BOX_LEN = BOX_LEN,
+                    HII_DIM = HII_DIM)
         else:
             with h5py.File(datafile, 'w') as h5:
                 h5.create_dataset('z', data = np.array(lc.node_redshifts), dtype = 'float32')
@@ -1522,7 +1549,10 @@ def Run_21cmFirstCLASS(
                 h5.create_dataset('Ts', data = np.array(lc.global_Ts), dtype = 'float32')
                 h5.create_dataset('Tx', data = np.array(lc.global_T_chi), dtype = 'float32')
                 h5.create_dataset('xH', data = np.array(lc.global_xH), dtype = 'float32')
-                
+                if save_lc:
+                    h5.create_dataset('z_lc', data = np.array(z_lc), dtype = 'float32')
+                    h5.create_dataset('Tb_lc', data = np.array(Tb_lc), dtype = 'float32')
+
                 h5.attrs['F_STAR10'] = F_STAR10
                 h5.attrs['F_ESC10'] = F_ESC10
                 h5.attrs['L_X'] = L_X

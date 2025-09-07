@@ -2218,3 +2218,14 @@ def distribute_MPI_Jobs(n_jobs, mpi_size, mpi_rank):
             dns[idx] = dns[idx] + 1
     indexs = np.arange(np.sum(dns[0:mpi_rank]), np.sum(dns[0:mpi_rank+1]), dtype=int)
     return indexs
+
+def clean_multinest_cache(FileRoot, keep_ev=0):
+    '''
+    remove MultiNest cache which can take a lot of disk space
+    '''
+
+    redundent_files = ['IS.iterinfo', 'IS.points', 'IS.ptprob', 'live.points', 'phys_live.points', 'resume.dat']
+    if not keep_ev: redundent_files.append('ev.dat')
+    for file in redundent_files:
+        file_name = FileRoot + file
+        if os.path.exists(file_name): os.remove(file_name)
