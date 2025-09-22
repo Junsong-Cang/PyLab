@@ -471,7 +471,7 @@ def Find_Index(
         print('--------crash imminent--------')
         print('x not in range, debug info:')
         print('x_min = ', x_vec[0], ', x = ', x, ', x_max = ', x_vec[-1])
-        raise Exception('Range error in Finx_Index')
+        raise Exception('Range error in Find_Index')
     
     count = 0
     while Go:

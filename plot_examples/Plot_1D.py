@@ -19,7 +19,7 @@ fig, ax = plt.subplots()
 ax.grid(True, which='both', linewidth = 0.3)  # `which='both'` enables major and minor grids
 
 # adjust figure width
-fig.set_size_inches(10, 8)
+fig.set_size_inches(8, 6)
 
 plt.plot(x, y1, '-k', linewidth=LineWidth, label = 'sin')
 
