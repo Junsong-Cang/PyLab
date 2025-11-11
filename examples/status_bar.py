@@ -4,7 +4,8 @@ from joblib import Parallel, delayed
 
 show_status = 1
 # Using only 1 cpu
-for idx in tqdm.tqdm(range(1000), desc = 'doing cool stuff', disable = not show_status):
+# for idx in tqdm.tqdm(range(1000), desc = 'doing cool stuff', disable = not show_status): # If u want to turn off messages
+for idx in tqdm.tqdm(range(1000), desc = 'doing cool stuff'):
     time.sleep(0.001)
 
 # Using multiple (10) cpus

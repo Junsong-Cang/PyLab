@@ -25,31 +25,33 @@ fig.set_size_inches(8, 4)
 # axs[0, 0], axs[0, 1]
 idx = 0
 axs[idx].grid(True, which='major', linewidth = 0.2) # Show grid, if u wanna show both minor and major grid, use which='both'
-axs[0].plot(x, y1, 'k', linewidth = LineWidth, label='sin')
-axs[0].plot(x, y2, 'r', linewidth = LineWidth, label='cos')
-axs[0].legend(fontsize=FontSize, loc = 'upper left')
-axs[0].set_title('First Plot',fontsize=FontSize)
-axs[0].set_xlabel('$x$',fontsize=FontSize,fontname='Times New Roman')
-axs[0].set_ylabel('$y$',fontsize=FontSize,fontname='Times New Roman')
-axs[0].tick_params(axis='both', which='both', labelsize = FontSize)
+axs[idx].plot(x, y1, 'k', linewidth = LineWidth, label='sin')
+axs[idx].plot(x, y2, 'r', linewidth = LineWidth, label='cos')
+axs[idx].legend(fontsize=FontSize, loc = 'upper left')
+axs[idx].set_title('First Plot',fontsize=FontSize)
+axs[idx].set_xlabel('$x$',fontsize=FontSize,fontname='Times New Roman')
+axs[idx].set_ylabel('$y$',fontsize=FontSize,fontname='Times New Roman')
+axs[idx].tick_params(axis='both', which='both', labelsize = FontSize)
 # Set axis limits
-axs[0].set_xlim(-3.2, 3.2)
-axs[0].set_ylim(-1.2, 1.2)
+axs[idx].set_xlim(-3.2, 3.2)
+axs[idx].set_ylim(-1.2, 1.2)
 # Can set x and y scales between linear (default) and log
-axs[0].set_yscale('linear')
+axs[idx].set_yscale('linear')
 # Can set tick numbers like this:
 # axs[idx, Tb_idx].set_yticks(np.array([-1500, -1000, -500, 0]))
 
-axs[1].plot(x, y3, 'k', linewidth = LineWidth, label='exp')
-axs[1].legend(fontsize=FontSize, loc = 'upper left')
-axs[1].set_title('Second Plot',fontsize=FontSize)
-axs[1].set_xlabel('$x$',fontsize=FontSize,fontname='Times New Roman')
-axs[1].set_ylabel('$y$',fontsize=FontSize,fontname='Times New Roman')
-axs[1].set_xlim(-3.2, 3.2)
-axs[1].set_ylim(0, 1.2)
+idx = 1
+axs[idx].plot(x, y3, 'k', linewidth = LineWidth, label='exp')
+axs[idx].legend(fontsize=FontSize, loc = 'upper left')
+axs[idx].set_title('Second Plot',fontsize=FontSize)
+axs[idx].set_xlabel('$x$',fontsize=FontSize,fontname='Times New Roman')
+axs[idx].set_ylabel('$y$',fontsize=FontSize,fontname='Times New Roman')
+axs[idx].set_xlim(-3.2, 3.2)
+axs[idx].set_ylim(0, 1.2)
 
 plt.xticks(size=FontSize)
 plt.yticks(size=FontSize)
+# You can also use: axs[idx].set_xticks
 
 plt.tight_layout()
 plt.savefig('/Users/cangtao/Desktop/tmp.pdf')

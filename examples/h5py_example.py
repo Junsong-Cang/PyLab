@@ -10,7 +10,7 @@ y = np.sin(x)
 # ----save data----
 f = h5py.File(file, 'w')
 f.create_dataset('dataset_x', data = x)
-f.create_dataset('dataset_y', data = y)
+f.create_dataset('dataset_y', data = y, dtype = 'float32') # can set precision
 f.close()
 
 # ----load data----

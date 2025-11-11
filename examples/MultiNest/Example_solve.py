@@ -1,4 +1,4 @@
-do_mcmc = 0
+do_mcmc = 1
 FileRoot = 'data/arcade_'
 
 #p1_info = {'name':'Tcmb', 'min':0, 'max':10, 'latex':'T_{\mathrm{cmb}}'}
@@ -41,9 +41,6 @@ def log_likelihood(theta):
   t = model(Tcmb, TR, Beta)
   Chi2 = np.sum(((t-t0)/dt)**2)
   LnL = - Chi2/2
-  # PL.SaySomething()
-  # time.sleep(0.0)
-  # print(LnL)
   return LnL
 
 if do_mcmc:

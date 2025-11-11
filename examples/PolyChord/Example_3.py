@@ -18,7 +18,7 @@ sigma = 0.1
 
 def likelihood(theta):
     """ Simple Gaussian Likelihood"""
-
+    print("theta = ", theta)
     nDims = len(theta)
     r2 = sum(theta**2)
     logL = -log(2*pi*sigma*sigma)*nDims/2.0
@@ -30,7 +30,10 @@ def likelihood(theta):
 
 def prior(hypercube):
     """ Uniform prior from [-1,1]^D. """
-    return UniformPrior(-1, 1)(hypercube)
+    print("hypercube = ", hypercube, "length = ", len(hypercube))
+    r = UniformPrior(-1, 1)(hypercube)
+    print("Returned values:", r)
+    return r
 
 #| Optional dumper function giving run-time read access to
 #| the live points, dead points, weights and evidences
@@ -46,6 +49,7 @@ settings.file_root = 'PolyChord_test'
 settings.nlive = 200
 settings.do_clustering = True
 settings.read_resume = False
+settings.feedback = 0
 
 #| Run PolyChord
 

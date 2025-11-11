@@ -262,7 +262,7 @@ def mcmc_derived_stat(
     Result[4][:] = upper_95
     Result[5][:] = MAP
     '''
-    t1 = TimeNow()
+    t1 = time.time()
     if NewRoot[0] == '/':
         # raise Exception('NewRoot cannot begin with /')
         New_Root = NewRoot
@@ -447,7 +447,7 @@ def mcmc_derived_stat(
         os.remove(New_Root + '.ranges')
     
     if print_status:
-        print('Time used for mcmc_derived_stat:', TimeNow() - t1)
+        print('Time used for mcmc_derived_stat:', time.time() - t1)
     return r
 
 def Find_Index(
@@ -1165,13 +1165,9 @@ def MCR(
     return x4, y4
 
 def TimeNow():
-    return time.time()
-
-def Timer(t1):
-    dt = TimeNow() - t1
-    print('Time used :', dt)
-    return dt
-
+    r = time.strftime("%Y-%m-%d %H:%M", time.localtime())
+    return r
+    
 def Interp_2D(Tab, x_axis, y_axis, x_target, y_target, Use_Log_X = False, Use_Log_Y = False, Use_Log_Z = False):
     '''
     Interpolate a 2D array
@@ -1461,7 +1457,7 @@ def derived_param_chains(
     show_status : whether or not to show status
     '''
     
-    t1 = TimeNow()
+    t1 = time.time()
     CF0 = old_root + '.txt'
     chain_0 = np.loadtxt(CF0)
     chain_shape= np.shape(chain_0)
@@ -1741,7 +1737,7 @@ def Read_Curve_GUI(
     
         if clicks:
             if count == 4:
-                t1 = TimeNow()
+                t1 = time.time()
             # Get the x and y coordinates of the click
             x_click, y_click = clicks[0]
             x_pixel.append(x_click)
@@ -1758,7 +1754,7 @@ def Read_Curve_GUI(
                 raise Exception('clicked on end point before any useful data points were extracted, try reducing x_pix_min')
             else:
                 proceed = 0
-    t2 = TimeNow()
+    t2 = time.time()
     print('Read_Curve_GUI: finished in ', "{:.1f}".format(t2 - t1), ' seconds, extracted ', count - 4, ' data points')
     def get_real_coordinates(pix, axis):
         if axis == 'x':

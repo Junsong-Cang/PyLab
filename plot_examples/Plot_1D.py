@@ -19,7 +19,7 @@ fig, ax = plt.subplots()
 ax.grid(True, which='both', linewidth = 0.3)  # `which='both'` enables major and minor grids
 
 # adjust figure width
-fig.set_size_inches(8, 6)
+fig.set_size_inches(8, 5)
 
 plt.plot(x, y1, '-k', linewidth=LineWidth, label = 'sin')
 
@@ -57,3 +57,10 @@ plt.tight_layout()
 # Save plot to a file
 plt.savefig('/Users/cangtao/Desktop/tmp.pdf')
 # plt.show()
+
+# Some more additional notes if u want to customize grids
+'''
+plt.grid(linestyle = '--', alpha = 0.2, which = "minor")
+plt.grid(linestyle = '-', alpha = 0.2, which = "major")
+ax.yaxis.grid(False, which = 'minor')
+'''

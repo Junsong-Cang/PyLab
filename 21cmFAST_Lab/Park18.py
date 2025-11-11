@@ -1,6 +1,6 @@
 
 FileName = '/Users/cangtao/Desktop/21cmFAST-data/Park18.h5'
-redshift = 4.9
+redshift = 5.0
 max_redshift = 35
 LC_Quantities = ('brightness_temp','Ts_box','xH_box','Tk_box')
 GLB_Quantities = ('brightness_temp','Ts_box','xH_box','dNrec_box','z_re_box', 'Gamma12_box','J_21_LW_box','density','Tk_box','Fcoll')
