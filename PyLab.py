@@ -1471,7 +1471,6 @@ def derived_param_chains(
         n_deriv = 1
     else:
         n_deriv = len(sample_p0)
-    
     ActiveParams = chain_0[:, 2:]
     
     def Get_New_Samples(idx):
@@ -1621,7 +1620,7 @@ def Read_Curve_GUI(
         OutputFile = '/tmp/tmp_Read_Curve_GUI_data.npz',
         LogX = False,
         LogY = False,
-        show_plot = False,
+        show_plot = True,
         x_pix_min = 100,
         show_cursor = 1
     ):
@@ -2225,3 +2224,9 @@ def clean_multinest_cache(FileRoot, keep_ev=0):
     for file in redundent_files:
         file_name = FileRoot + file
         if os.path.exists(file_name): os.remove(file_name)
+
+def show_time():
+    '''
+    In a ipython notebook it can be hard to know whether a module has been executed or the output is from previous run
+    '''
+    print('Time now:', time.strftime("%Y-%m-%d %H:%M", time.localtime()))
