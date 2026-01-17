@@ -655,21 +655,23 @@ def Compute_Optical_Depth(
     r = np.trapz(x = z, y = f)
     return r
 
-def Switch_xe_format(xe = 1.0, format = 0):
+def Switch_xe_format(xe = 1.0, input_format = 'HyRec'):
     '''
     change between different xe format (HyRec or 21cmFAST)
     ----inputs----
     xe : ionisation fraction
-    format : xe input format
-        0 - HyRec, ne/nH
-        1 - 21cmFAST, np/nH
+    input_format : xe input format
+        HyRec - ne/nH
+        21cmFAST - ne/(nH + nHe), Helium is singly ionized
     '''
-    #raise Exception('This is inacurate, Helium is singly ionized in 21cmFAST')
     fHe = 0.08112582781456953 # nHe/nH for Yhe = 0.245
-    if format == 0:
-        r = xe/(1+2*fHe)
+    if input_format == 'HyRec':
+        r = xe/(1+fHe)
+        if r > 1.0: r = 1.0 # Can happen if Helium is doubly ionized
+    elif input_format == '21cmFAST':
+        r = xe * (1+fHe)
     else:
-        r = xe * (1+2*fHe)
+        raise Exception("Wrong input_format, must be one of the following strings: HyRec, 21cmFAST")
     return r
 
 def fcoll_function(
