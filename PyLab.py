@@ -615,7 +615,6 @@ def Interp_3D(Tab, x_axis, y_axis, z_axis, x, y, z, Use_Extrap = False):
     r1 = g[id1]
     r2 = g[id2]
     r = (r2 - r1)*(z_ - z1)/(z2 - z1) + r1
-
     return r
 
 def LCDM_HyRec(z = np.logspace(0,2,10), Use_EoR = False):
@@ -1431,7 +1430,7 @@ def derived_param_chains(
         new_root = '/Users/cangtao/cloud/GitHub/Radio_Excess_EDGES/data/28_EDGES_tau/28_EDGES_tau_derived', 
         get_plot = 0,
         plot_file = '/Users/cangtao/Desktop/tmp.pdf', 
-        derived_names = {'name': 'tau', 'latex': '\\tau_{\mathrm{rei}}'},
+        derived_names = {'name': 'tau', 'latex': 'tau'},
         clean_up = False,
         prior_min = None,
         prior_max = None,

@@ -212,58 +212,6 @@ double Interp_1D(double x, double *x_axis, double *y_axis, int nx, int Use_LogX,
     return r;
 }
 
-int main()
-{
-    // testing precision of Interp_1D, don't forget to add these includes when running outside 21cmFAST env:
-    // #include <stdio.h>
-    // #include <stdlib.h>
-    // #include <math.h>
-    // conclusion: works well with:
-    //     vec size = filled size
-    //     vec size != filled size
-    //     reversed vec
-    //     LogY
-    //
-    int nx, idx, nx2;
-    double x_vec[1000], y_vec[1000], x1, x2, dx, x, y;
-    FILE *OutputFile;
-    nx = 100;
-    x1 = 10;
-    x2 = -4;
-    dx = (x2 - x1) / ((double)nx - 1);
-
-    OutputFile = fopen("tmp_1.txt", "w");
-
-    for (idx = 0; idx < nx; idx++)
-    {
-        x_vec[idx] = x1 + ((double)idx) * dx;
-        y_vec[idx] = cos(x_vec[idx]);
-        fprintf(OutputFile, "%E  %E\n", x_vec[idx], y_vec[idx]);
-        if ((idx == 0) || (idx == nx - 1))
-        {
-            printf("%f\n", x_vec[idx]);
-        }
-    }
-    fclose(OutputFile);
-
-    nx2 = 90;
-    x1 = 3.2;
-    x2 = 6.32;
-    dx = (x2 - x1) / ((double)nx2 - 1);
-    OutputFile = fopen("tmp_2.txt", "w");
-
-    for (idx = 0; idx < nx2; idx++)
-    {
-        x = x1 + ((double)idx) * dx;
-        // printf("%d  %f\n", idx, x);
-        y = Interp_1D(x, x_vec, y_vec, nx, 0, 1, 0);
-        fprintf(OutputFile, "%E  %E\n", x, y);
-    }
-    fclose(OutputFile);
-
-    return 0;
-}
-
 double HaloProfile_Kernel(double z, double mh, double r, int ProfileType)
 {
     /* Halo density profile
@@ -275,35 +223,35 @@ double HaloProfile_Kernel(double z, double mh, double r, int ProfileType)
                   0 - Rho_DM in msun/pc^3
                   1 - viral radius in pc
     */
-   
-   // printf("Check that the integrated mass converges to m\n");
-   double OmM, OmC, m, OmR, OmL, h, pi, rho_cr0, zp, OmMz, d, Delta_C, log10_c, c, delta_c, rv1, rv2, rv3, r_vir, x, cx, rho_cr, RhoDM;
-   
-   // Some settings
+
+    // printf("Check that the integrated mass converges to m\n");
+    double OmM, OmC, m, OmR, OmL, h, pi, rho_cr0, zp, OmMz, d, Delta_C, log10_c, c, delta_c, rv1, rv2, rv3, r_vir, x, cx, rho_cr, RhoDM;
+
+    // Some settings
     OmM = 0.30964168161;
     OmR = 9.1e-5;
     OmC = 0.260667;
     OmL = 0.69026731839;
     h = 0.6766;
     pi = 3.141592653589793;
-    rho_cr0 = 2.775e-7 * pow(h, 2.);// critical density in msun/pc^3
-    
+    rho_cr0 = 2.775e-7 * pow(h, 2.); // critical density in msun/pc^3
+
     // Pre-requisites
-    m = mh * OmC/OmM; // DM mass
+    m = mh * OmC / OmM; // DM mass
     zp = 1. + z;
-    OmMz = OmM * pow(zp, 3.) /(OmM * pow(zp, 3.) + OmL);
+    OmMz = OmM * pow(zp, 3.) / (OmM * pow(zp, 3.) + OmL);
     d = OmMz - 1.;
     Delta_C = 18. * pow(pi, 2.) + 82. * d - 39. * pow(d, 2.);
     log10_c = 1.071 - 0.098 * (log10(m) - 12.);
-    c = pow(10., log10_c)/zp ; // concentration, see appdx.A of Zip.et for the additional (1+z) factor
-    delta_c = Delta_C * pow(c, 3.) / (3. * (log(1. + c) - c/(1. + c)));
+    c = pow(10., log10_c) / zp; // concentration, see appdx.A of Zip.et for the additional (1+z) factor
+    delta_c = Delta_C * pow(c, 3.) / (3. * (log(1. + c) - c / (1. + c)));
 
-    rv1 = 0.784 * pow(m * h/1.0e8, 1./3.);
-    rv2 = pow(OmM * Delta_C / (OmMz * 18. * pow(pi, 2.)), -1./3.);
-    rv3 = (10./zp)/h * 1000.;
+    rv1 = 0.784 * pow(m * h / 1.0e8, 1. / 3.);
+    rv2 = pow(OmM * Delta_C / (OmMz * 18. * pow(pi, 2.)), -1. / 3.);
+    rv3 = (10. / zp) / h * 1000.;
     r_vir = rv1 * rv2 * rv3;
 
-    x = r/r_vir;
+    x = r / r_vir;
     if (x > 1.)
     {
         RhoDM = 0.;
@@ -314,7 +262,7 @@ double HaloProfile_Kernel(double z, double mh, double r, int ProfileType)
         cx = c * x;
         // rho_cr = rho_cr0 * (OmL + OmM * zp**3 + OmR * zp**4);
         rho_cr = rho_cr0 * (OmL + OmM * pow(zp, 3.) + OmR * pow(zp, 4.));
-        RhoDM = rho_cr * delta_c /(cx * pow(1. + cx, 2.));
+        RhoDM = rho_cr * delta_c / (cx * pow(1. + cx, 2.));
     }
     if (ProfileType == 0)
     {
@@ -324,4 +272,108 @@ double HaloProfile_Kernel(double z, double mh, double r, int ProfileType)
     {
         return RhoDM;
     }
+}
+
+void linspace(double xmin, double xmax, double *x, int nx)
+{
+    /*
+    Create a linspace array
+    -- inputs --
+    xmin: minimum of x
+    xmax: maximum of x
+    x: pointer of pre-created x array
+    nx: array size
+    */
+    int idx;
+    double dx;
+    dx = (xmax - xmin) / ((double)nx - 1.0);
+    for (idx = 0; idx < nx; idx++)
+    {
+        x[idx] = xmin + ((double)idx * dx);
+    }
+}
+
+void logspace(double lgx_min, double lgx_max, double *x, int nx)
+{
+    /*
+    Create a logspace array
+    -- inputs --
+    lgx_min: minimum of log10(x)
+    lgx_max: maximum of log10(x)
+    x: pointer of pre-created x array
+    nx: array size
+    */
+    int idx;
+    double dlx;
+    dlx = (lgx_max - lgx_min) / ((double)nx - 1.0);
+    for (idx = 0; idx < nx; idx++)
+    {
+        x[idx] = pow(10.0, lgx_min + ((double)idx * dlx));
+    }
+}
+
+double Integrate(double *x, double *fx, int nx, int method)
+{
+    /*
+    Integrate fx over x: \int dx f(x)
+    -- inputs --
+    method: integration method. For equally spaced x methods 0 and 1 are pretty much the same, but trapz generally outperforms for non-equally spaced x
+        0 - summation, simplest method
+            \int dx f(x) = \sum_{i=0}^{n-1}f_idx_i
+        1 - trapz
+    */
+    double dx, result, f;
+    int idx;
+    result = 0.0;
+    if (method == 0)
+    {
+        for (idx = 0; idx < nx - 1; idx++)
+        {
+            dx = x[idx + 1] - x[idx];
+            f = fx[idx];
+            // printf("f = %15E\n", f);
+            result += f * dx;
+        }
+    }
+    else if (method == 1)
+    {
+        for (idx = 0; idx < nx - 1; idx++)
+        {
+            dx = x[idx + 1] - x[idx];
+            f = (fx[idx] + fx[idx + 1]) / 2.0;
+            // printf("f = %15E\n", f);
+            result += f * dx;
+        }
+    }
+    return result;
+}
+
+int main()
+{
+    double x[10000], y[10000];
+    int nx = 10000;
+    int idx;
+    double r0, r1, x1, x2, truth;
+    
+    x1 = 1.0;
+    x2 = 20.0;
+
+    // linspace(x1, x2, x, nx);
+    logspace(log10(x1), log10(x2), x, nx);
+    
+    for (idx = 0; idx < nx; idx++)
+    {
+        y[idx] = exp(x[idx]);
+    }
+    // printf("inte = %10E\n", Integrate(x, y, nx, 1));
+    truth = exp(x2) - exp(x1);
+    r0 = Integrate(x, y, nx, 0);
+    r1 = Integrate(x, y, nx, 1);
+    printf("Truth = %15E\n", truth);
+    printf("r0 = %15E\n", r0);
+    printf("r1 = %15E\n", r1);
+    printf("dif_0 = %7E\n", 1 - r0/truth);
+    printf("dif_1 = %7E\n", 1 - r1/truth);
+
+    return 0;
 }

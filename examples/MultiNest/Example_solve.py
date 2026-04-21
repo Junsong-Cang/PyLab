@@ -52,7 +52,7 @@ if do_mcmc:
       outputfiles_basename = FileRoot,
       n_live_points = 100 * ndim,
       resume = False,
-      verbose = True,
+      verbose = False,
       n_iter_before_update = 10)
   # Some post-processing, not really nessesary
   t2 = time.time()

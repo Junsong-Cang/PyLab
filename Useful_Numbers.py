@@ -9,7 +9,7 @@ Cosmology = {
     'OmC' : 0.260667,
     'OmB' : 0.04897468161,
     'OmM' : 0.30964168161,
-    'OmR' : 9.1E-5,
+    'OmR' : 9.1E-5, # Assuming that neutrinos are massless
     'zeq' : 3401.6558418681316,
     't0' : 4.3523939036782445e+17, # Age of the Universe today
     'YHe' : 0.245, # Helium mass density fraction

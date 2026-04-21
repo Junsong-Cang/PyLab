@@ -35,10 +35,6 @@ except:
 
 from scipy.interpolate import InterpolatedUnivariateSpline as spline
 from Useful_Numbers import Cosmology as cosmo
-try:
-    from echo21 import echopipeline
-except:
-    pass
 
 class P21c_PS_overflow(Exception):
     def __init__(self, z, zmin, zmax):
@@ -667,7 +663,8 @@ def Switch_xe_format(xe = 1.0, input_format = 'HyRec'):
     fHe = 0.08112582781456953 # nHe/nH for Yhe = 0.245
     if input_format == 'HyRec':
         r = xe/(1+fHe)
-        if r > 1.0: r = 1.0 # Can happen if Helium is doubly ionized
+        r[r>1.0] = 1.0
+        # if r > 1.0: r = 1.0 # Can happen if Helium is doubly ionized
     elif input_format == '21cmFAST':
         r = xe * (1+fHe)
     else:
@@ -1366,35 +1363,3 @@ def Read_p21c_cache(path, z, field = 'Tb', result_type = 'box'):
             box = H5F[name][:]
             H5F.close()
             return box
-
-def Run_echo21(
-        fX = 1,
-        fLy = 1,
-        fesc = 0.1,
-        Tvir = 1E4,
-        mx = 1,
-        sigma45 = 0,
-        hmf = 'press74',
-        sfrd = 'semi-emp'
-        ):
-    IDM_grid = np.linspace(-4, 3, 15)
-    if np.min(np.abs(np.log10(mx) - IDM_grid)) > 1E-2:
-        MSG = "DM mass not in required grid"
-        raise Exception(MSG)
-    if np.min(np.abs(np.log10(sigma45) - IDM_grid)) > 1E-2 and np.log10(sigma45) > -5:
-        MSG = "sigma45 not in required grid"
-        raise Exception(MSG)
-    # Setting param dict
-    if sigma45 > 1E-101:
-        cosmo_dict = {'Ho':67.66,'Om_m':0.30964168161,'Om_b':0.04897468161, 'sig8':0.8102,'ns':0.9665, 'Tcmbo':2.7255,'Yp':0.245, 'mx_gev':mx,'sigma45':sigma45}
-    else:
-        cosmo_dict = {'Ho':67.66,'Om_m':0.30964168161,'Om_b':0.04897468161, 'sig8':0.8102,'ns':0.9665, 'Tcmbo':2.7255,'Yp':0.245}
-    
-    astro_dict = {'fLy':fLy, 'sLy':2.64, 'fX':fX, 'wX':1.5,'fesc':fesc, 'Tvir': Tvir}
-    
-    pipe = echopipeline.pipeline(
-        cosmo = cosmo_dict,
-        astro = astro_dict,
-        sfrd_dic = {'type': sfrd, 't_star': 0.5, 'hmf': hmf})
-    result = pipe.glob_sig()
-    return result
