@@ -2,6 +2,7 @@
 Some useful python functions fro 21cmFAST related calculations, to be able to use this from any locations, add this to your bash_profile:
 export PYTHONPATH=Current_Path:${PYTHONPATH}
 Functions:
+    Hubble
     compute_power
     PowerSpectra_Coeval_Kernel
     HMF
@@ -47,26 +48,31 @@ def Load_Interp_Tables():
     if len(PyLab_path)==0:
         raise Exception('Found no PyLab path')
     PyLab_path = PyLab_path[0]
+
     # 1 : Load HMG, author: PyLab/data/HMF_Table.py
     HMF_Table_File = PyLab_path + 'data/HMF_Interp_Table.npz'
     HMF_Table = np.load(HMF_Table_File)
     # HMF_Table contains the following fields:
     # dndm, z, m
 
-    # 2 : Load cosmic age, author: PyLab/data/cosmic_age_table.py
-    Age_Table_File = PyLab_path + 'data/cosmic_age_table.npz'
-    Cosmic_Age_Table = np.load(Age_Table_File)
-    # Age_Table contains the following fields:
-    # LgZp_axis, LgT_axis
-
     Interp_Table = {
         'HMF_Table': HMF_Table,
-        'Cosmic_Age_Table' : Cosmic_Age_Table
         }
     return Interp_Table
 
 # Halo_Interp_Table = Load_Interp_Tables()
 Interp_Table = Load_Interp_Tables()
+
+def Hubble(z=0, OmM = 0.30964168161, h = 0.6766, OmR = 9.1E-5):
+    '''
+    Hubble rate for LCDM model
+    '''
+    OmL = 1 - OmM - OmR
+    H0 = h*3.240755744239557E-18
+    zp3 = pow(1+z, 3)
+    zp4 = pow(1+z, 4)
+    r = H0 * np.sqrt(OmL + OmM * zp3 + OmR * zp4)
+    return r
 
 def PowerSpectra_Coeval_Kernel(
         Field = 0, 
@@ -260,7 +266,7 @@ def MUV2Mh(MUV=-10,z=6, t_STAR = 0.5, ALPHA_STAR = 0.5, log10_f10 = -1.301):
     LUV = pow(10, 0.4 * (51.63 - MUV))
     # SFR, in Msun/s
     SFR = 1.15E-28 * LUV / yr
-    H = PL.Hubble(z)
+    H = Hubble(z)
     m1 = t_STAR * OmM * pow(10, 10 * ALPHA_STAR) * SFR / (H * f10 * OmB)
     r = pow(m1, 1/(ALPHA_STAR+1))
     return r
@@ -325,7 +331,7 @@ def SFRD(
     SFR = np.linspace(1,100,nm)
     for zid in np.arange(0,nz):
         z = z_ax[zid]
-        H = PL.Hubble(z)
+        H = Hubble(z)
         mh, dndmh = HMF(z, hmf_model, m1, m2, nm, Transfer_model)
         for id in np.arange(0,nm):
             m = mh[id] # Msun
@@ -353,7 +359,7 @@ def UVLF(M1 = -22,
     OmB = 0.04897
     M_TURN = 10**log10_Mturn
     f10 = 10**log10_f10
-    H = PL.Hubble(z)
+    H = Hubble(z)
     mh2 = MUV2Mh(M1, z, t_STAR, ALPHA_STAR, log10_f10)
     mh1 = MUV2Mh(M2, z, t_STAR, ALPHA_STAR, log10_f10)
     year = 31557600
@@ -411,7 +417,7 @@ def Radio_Temp_Astro(
     z_new = np.linspace(zmin, zmax, 10000)
     SFRD_new = np.interp(z_new, z_ax, SFRD_ax)
     SFRD_SI = SFRD_new * Msun / Yr / pow(Mpc, 3)
-    H = PL.Hubble(z_new)
+    H = Hubble(z_new)
     z = np.linspace(zmin, zmax, nz)
     T = np.zeros(nz)
     xp = np.log(1+z_new)
@@ -646,7 +652,7 @@ def Compute_Optical_Depth(
         neHe = np.array(neHe)
         ne = neH + neHe
     
-    H = PL.Hubble(z)
+    H = Hubble(z)
     f = Prefix*ne/H/(1+z)*np.heaviside(zmax - z, 1)
     r = np.trapz(x = z, y = f)
     return r
@@ -724,31 +730,22 @@ def lc2tau(file = '/Users/cangtao/Desktop/21cmFAST-data/EOS_2021.h5'):
     r = p21c.wrapper.compute_tau(redshifts = z, global_xHI = xH)
     return r
 
-def z2t(z = 0, unit = 0, nz = 10000, max_ratio = 1.0e6, Use_interp = 0):
-    
+def z2t(z = 0,
+        OmM = 0.30964168161, h = 0.6766, OmR = 9.1E-5,
+        unit = 'second', nz = 10000, max_ratio = 1.0e6):
     '''
     Find cosmic age t using z
     ---- Inputs ----
     z : redshifts
     unit : unit of time
-        0 - second
-        1 - year
+        second
+        year
     nz : number of z integration timesteps
     max_ratio : z-integration upper limit / (1+z)
     Use_interp : use pre-computed interpolation table
     '''
     
     yr = 365.25 * 24 * 3600
-    
-    if Use_interp:
-        LgZp = np.log10(1+z)
-        lr = np.interp(x = LgZp, xp = Interp_Table['Cosmic_Age_Table']['LgZp_axis'], fp = Interp_Table['Cosmic_Age_Table']['LgT_axis'])
-        t = 10**lr
-        if unit == 0:
-            return t
-        else:
-            t = t/yr    
-            return t
         
     def z2x(z_):
         # convert z to lna
@@ -767,24 +764,51 @@ def z2t(z = 0, unit = 0, nz = 10000, max_ratio = 1.0e6, Use_interp = 0):
     x2 = z2x(z)
     x_vec = np.linspace(x1, x2, nz)
     z_vec = x2z(x_vec)
-    H = PL.Hubble(z = z_vec)
+    H = Hubble(z = z_vec, OmM = OmM, h = h, OmR = OmR)
     t = np.trapz(x = x_vec, y = 1/H)
-    if unit == 0:
+    if unit == 'second':
         return t
-    else:
+    elif unit == 'year':
         t = t/yr    
         return t
+    else:
+        raise Exception("Unknown time unit")
 
-def t2z(t):
-    LgT = np.log10(t)
-    # Interp requires x to be increasing
-    LgT_axis = Interp_Table['Cosmic_Age_Table']['LgT_axis'][::-1]
-    LgZp_axis = Interp_Table['Cosmic_Age_Table']['LgZp_axis'][::-1]
-    Lgzp = np.interp(
-        x = LgT,
-        xp = LgT_axis,
-        fp = LgZp_axis)
-    z = 10**Lgzp - 1
+def t2z(
+        t, 
+        OmM = 0.30964168161, h = 0.6766, OmR = 9.1E-5,
+        precision = 1E-12, lnzp_max_ini = 5.0, max_iterations = 20):
+    '''
+    Find redshift at time t, speed with default precision (1E-12) assuming not need to update lnzp_max: 100 calls/s
+    Speed can be improved further if using a better solve algorism or using interpolation table
+    ---- inputs ----
+    t : Age of the Universe in seconds
+    OmM : OmM
+    h : Hubble parameter
+    OmR : Omega_R
+    precision : solve precision for ln(1+z)
+    lnzp_max_ini : initial maximum ln(1+z) in the search
+    max_iterations : in case the search upper limit needs to be updated, this sets the maximum number of iterations
+    '''
+    def fun(lnzp):
+        z = np.exp(lnzp) - 1.0
+        r = z2t(z=z, OmM=OmM, h=h, OmR=OmR) - t
+        return r
+    
+    proceed = 1
+    lnzp_max = lnzp_max_ini
+    count = 0
+    while proceed:
+        try:
+            lnzp = PL.Solve(F = fun, Xmin = 0.0, Xmax = lnzp_max, Precision = precision)
+            proceed = 0
+        except:
+            lnzp_max += 2.0
+        count += 1
+        if count > max_iterations:
+            proceed = 0
+            raise Exception("Cannot find solution")
+    z = np.exp(lnzp) - 1.0
     return z
 
 def cosmic_distance(z = 1000, z_end = 0, OmM = 0.30964168161, h = 0.6766, OmR = 9.1E-5, Use_Comoving = 1, Unit = 'Mpc'):
@@ -794,7 +818,7 @@ def cosmic_distance(z = 1000, z_end = 0, OmM = 0.30964168161, h = 0.6766, OmR = 
     nz = 1000
     zp_vec = np.logspace(np.log10(1+z_end), np.log10(1+z), nz)
     z_vec = zp_vec - 1
-    H_vec = PL.Hubble(z = z_vec, OmM = OmM, h = h, OmR = OmR)
+    H_vec = Hubble(z = z_vec, OmM = OmM, h = h, OmR = OmR)
     c = 299792458
     Mpc = 3.086E22
     yr = 31557600
@@ -827,7 +851,7 @@ def d2z(d, OmM = 0.30964168161, h = 0.6766, OmR = 9.1E-5):
         z = 10**x - 1
         r = cosmic_distance(z = z, z_end=0, OmM = OmM, h = h, OmR = OmR, Use_Comoving=1, Unit='Mpc')
         return d - r
-    x = PL.Solve(F = kernel, Xmin = 0, Xmax = 3, Precision=1e-3)
+    x = PL.Solve(F = kernel, Xmin = 0, Xmax = 3, Precision=1e-6)
     z = 10**x - 1
     return z
 

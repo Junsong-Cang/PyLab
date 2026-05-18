@@ -729,13 +729,8 @@ def Hubble(z=0, OmM = 0.30964168161, h = 0.6766, OmR = 9.1E-5):
     '''
     Hubble rate for LCDM model
     '''
-    OmL = 1 - OmM - OmR
-    H0 = h*3.240755744239557E-18
-    zp3 = pow(1+z, 3)
-    zp4 = pow(1+z, 4)
-    r = H0 * np.sqrt(OmL + OmM * zp3 + OmR * zp4)
-    return r
-
+    raise Exception("This function has been moved to cosmo_tools.py")
+    
 def Find_Negative_Element(x = np.array([1,2,-2,3]), Small = 1e-200, model = 1):
     r = 0
     Xmin = np.min(x)
@@ -2117,23 +2112,75 @@ def Read_MultiNest_Stats(
     os.remove(SwapFile)
     return r
 
-def h5disp(filename, show_att = 1):
+def h5disp(filename, path="/"):
     '''
-    Python equivalent of MatLab h5disp
+    Python version of matlab.h5disp, this is actually written by ChatGPT
     '''
-    def print_structure(name, obj):
+    
+    INDENT = "    "
+
+    def format_dtype(dtype):
+        if dtype.kind == "S":
+            return f"string[{dtype.itemsize}]"
+        elif dtype.kind == "U":
+            return "unicode"
+        return str(dtype)
+
+    def format_shape(shape):
+        if shape == ():
+            return "scalar"
+        return " x ".join(str(x) for x in shape)
+
+    def print_attrs(obj, indent=""):
+        if len(obj.attrs) == 0:
+            return
+
+        print(f"{indent}Attributes:")
+
+        for key, value in obj.attrs.items():
+            if isinstance(value, bytes):
+                value = value.decode(errors="ignore")
+            if isinstance(value, np.ndarray):
+                value = np.array2string(value, threshold=10)
+
+            print(f"{indent}{INDENT}{key}: {value}")
+
+    def disp_item(name, obj, level):
+        indent = INDENT * level
+
         if isinstance(obj, h5py.Group):
-            print(f"Group: {name}")
-            count = 0
-            if show_att:
-                for k in obj.attrs:
-                    if count == 0: print('    Attributes')
-                    count += 1
-                    print('        ' + k + ' :', obj.attrs[k])
+
+            # skip printing root
+            if level >= 0:
+                print(f"{indent}Group '{name}'")
+                print_attrs(obj, indent + INDENT)
+
+            for key in obj:
+                child_name = f"{name}/{key}".replace("//", "/")
+                disp_item(child_name, obj[key], level + 1)
+
         elif isinstance(obj, h5py.Dataset):
-            print(f"    Dataset: {name}\n         Shape: {obj.shape}\n          Type: {obj.dtype}")
-    hdf = h5py.File(filename, 'r')
-    hdf.visititems(print_structure)
+
+            print(f"{indent}Dataset '{name}'")
+            print(f"{indent}{INDENT}Size: {format_shape(obj.shape)}")
+            print(f"{indent}{INDENT}Datatype: {format_dtype(obj.dtype)}")
+
+            if obj.compression is not None:
+                print(f"{indent}{INDENT}Compression: {obj.compression}")
+
+            print_attrs(obj, indent + INDENT)
+
+    with h5py.File(filename, "r") as f:
+
+        if path not in f:
+            raise KeyError(f"Path '{path}' not found in file.")
+
+        print(f"HDF5 file: {filename}\n")
+
+        obj = f[path]
+
+        # start at level = -1 so root '/' contributes no indentation
+        disp_item(path, obj, level=-1)
 
 def count_stats_1D(x, nbin = 100):
     '''
