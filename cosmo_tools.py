@@ -41,28 +41,6 @@ class P21c_PS_overflow(Exception):
     def __init__(self, z, zmin, zmax):
         print('Exception in cosmo_tools.Get_p21c_PSk_Kernel: Cannot find cube for redshift', z, ', lc range = ', [zmin, zmax])
 
-# Load some Interpolation Tables
-def Load_Interp_Tables():
-    pythonpaths = os.environ.get('PYTHONPATH').split(os.pathsep)
-    PyLab_path = [path for path in pythonpaths if 'PyLab' in path]
-    if len(PyLab_path)==0:
-        raise Exception('Found no PyLab path')
-    PyLab_path = PyLab_path[0]
-
-    # 1 : Load HMG, author: PyLab/data/HMF_Table.py
-    HMF_Table_File = PyLab_path + 'data/HMF_Interp_Table.npz'
-    HMF_Table = np.load(HMF_Table_File)
-    # HMF_Table contains the following fields:
-    # dndm, z, m
-
-    Interp_Table = {
-        'HMF_Table': HMF_Table,
-        }
-    return Interp_Table
-
-# Halo_Interp_Table = Load_Interp_Tables()
-Interp_Table = Load_Interp_Tables()
-
 def Hubble(z=0, OmM = 0.30964168161, h = 0.6766, OmR = 9.1E-5):
     '''
     Hubble rate for LCDM model
@@ -166,8 +144,7 @@ def HMF(z=0,
         Mmin = 1e2,
         Mmax = 1E18,
         nm = 100,
-        POWER_SPECTRUM = 0,
-        Use_Interp = False):
+        POWER_SPECTRUM = 0):
     '''
     An interface with hmf package
     -- inputs --
@@ -185,43 +162,6 @@ def HMF(z=0,
     m : mh in Msun
     dndm : dn/dm in Mpc^-3 Msun^-1
     '''
-    if Use_Interp:
-        # This can improve speed by 18 times
-    
-        # check whether the data is ok
-
-        HMF_Tab = Interp_Table['HMF_Table']
-        z_axis = HMF_Tab['z']
-        m_axis = HMF_Tab['m']
-
-        model_ok = (model == 1)
-        PS_ok = (POWER_SPECTRUM == 0)
-        z_ok = PL.Within_Range(z, z_axis)
-        m_ok = PL.Within_Range(Mmin, m_axis) and PL.Within_Range(Mmax, m_axis)
-        All_Clear = model_ok and PS_ok and z_ok and m_ok
-
-        if All_Clear:
-            Tab = HMF_Tab['dndm']
-            idx1 = PL.Find_Index(x = z, x_axis = z_axis)
-            idx2 = idx1 + 1
-            z1 = z_axis[idx1]
-            z2 = z_axis[idx2]
-            # Interpolate in log axis
-            x  = np.log10(1+z)
-            x1 = np.log10(1+z1)
-            x2 = np.log10(1+z2)
-            y1 = Tab[idx1,:]
-            y2 = Tab[idx2,:]
-            # Get dndm at z
-            fz = (y2 - y1)*(x - x1)/(x2 - x1) + y1
-            # Now do m axis in log
-            lm1 = np.log10(Mmin)
-            lm2 = np.log10(Mmax)
-            m = np.logspace(lm1, lm2, nm)
-            lm = np.log10(m)
-            lm_axis = np.log10(m_axis)
-            dndm = np.interp(x = lm, xp = lm_axis, fp = fz)
-            return m, dndm
 
     h = 0.6766
     hmf_models = ["PS", "SMT"]
