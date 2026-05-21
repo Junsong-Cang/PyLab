@@ -1289,7 +1289,7 @@ def Compute_nd_PS_t21c(
             input_array_nd = box,
             kbins = k1d_bin_edges,
             box_dims = [box_length[0], box_length[1], box_length[2]],
-            binning = 'linear')
+            binning = binning)
         PS = PS*ks**3/(2 * np.pi**2)
         #if binning == 'log': PS = np.interp(x = np.log(kbins_1D), xp = np.log(ks), fp = PS, left = np.nan, right = np.nan)
         #if binning == 'linear': PS = np.interp(x = kbins_1D, xp = ks, fp = PS, left = np.nan, right = np.nan)
