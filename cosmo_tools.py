@@ -27,7 +27,6 @@ try:
     import py21cmfast as p21c
 except:
     pass
-# warnings.warn('from PyLab import * has been replaced with import PyLab as PL, many of funcitons in this module needs to be updated')
 import PyLab as PL
 try:
     from hmf import MassFunction
@@ -657,15 +656,25 @@ def fcoll_function(
         fcoll[idx] = RhoHalo/RhoM_cmv
     return fcoll
 
-def lc2tau(file = '/Users/cangtao/Desktop/21cmFAST-data/EOS_2021.h5'):
+def lc2tau(
+        file = '/Users/cangtao/Desktop/21cmFAST-data/EOS_2021.h5',
+        zmax = 35.0):
     '''
     Find tau from a LightCone h5 file
     '''
-    lc = p21c.LightCone.read(file)
-    z = lc.node_redshifts[::-1]
-    xH = lc.global_xH[::-1]
+    with h5py.File(file, 'r') as h5:
+        z = h5['node_redshifts'][:][::-1]
+        xH = h5['/global_quantities/xH_box'][:][::-1]
+    
+    #lc = p21c.LightCone.read(file)
+    #z = lc.node_redshifts[::-1]
+    #xH = lc.global_xH[::-1]
+    xH = xH[z < zmax]
+    z = z[z < zmax]
+    
     z2 = np.linspace(3.0, z.max(), 1000)
     xH = np.interp(x = z2, xp = z, fp = xH)
+    # print("xH = ", xH)
     z = z2
     r = p21c.wrapper.compute_tau(redshifts = z, global_xHI = xH)
     return r
@@ -1205,17 +1214,36 @@ def Compute_nd_PS_t21c(
     '''
     out = {}
     # Get k1d bin edges following Adele's advice, k must be linearly spaced
-    def Find_k_bin_edges(k_axis):
-        nk = len(k_axis)
-        dks = np.abs(k_axis[0:nk-1] - k_axis[1:nk])
-        dk_mean = np.mean(dks)
-        dk1 = dks[1]
-        if np.abs(1-dk1/dk_mean) > 1E-2:
-            print('Something is wrong with k2d axis')
-            print(dk1, dk_mean)
-            raise Exception('kbins_1D should be linearly spaced, dev version for SKA DC')
-        k_edges = np.linspace(np.min(k_axis) - dk_mean/2, np.max(k_axis) + dk_mean/2, nk + 1)
-        return k_edges
+
+    def Find_k_bin_edges(k):
+        '''
+        decide whether k bins are linearly or log-linearly spaced
+        '''
+        def x_is_linear(x):
+            n = len(x)
+            dxs = np.abs(x[0:n-1] - x[1:n])
+            dx_mean = np.mean(dxs)
+            result = True
+            for idx in np.arange(0, n-1):
+                # Only assign linear if ALL dxs are the same
+                if np.abs(1.0-dxs[idx]/dx_mean) > 1.0E-3:
+                    result = False
+            return result
+        if x_is_linear(k):
+            x = k
+            bin_type = 'linear'
+        elif x_is_linear(np.log10(k)):
+            x = np.log10(k)
+            bin_type = 'log'
+        else:
+            # If neither k or log10(k) is linear, raise error
+            raise Exception("Unkown k bin type")
+        n = len(x)
+        dx = np.abs(x[1] - x[0]) # x must be linear so using 1st dx is ok
+        bin_edge = np.linspace(np.min(x) - dx/2, np.max(x) + dx/2, n+1)
+        if bin_type == 'log':
+            bin_edge = 10.0**bin_edge
+        return bin_edge
     
     if do_2D:
         # print('kbins_2D[0]:', kbins_2D[0])

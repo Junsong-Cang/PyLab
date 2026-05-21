@@ -15,6 +15,7 @@ plt.rcParams.update({
     'text.usetex': True,
     'font.family':'Times',
     'text.latex.preamble': r'\usepackage{newtxtext,newtxmath}'})
+
 fig, ax = plt.subplots()
 ax.grid(True, which='both', linewidth = 0.3)  # `which='both'` enables major and minor grids
 
@@ -29,15 +30,15 @@ plt.plot(x, y1, '-k', linewidth=LineWidth, label = 'sin')
 # or you can use:
 # plt.plot(x,y1,color = 'k',linestyle='-',linewidth=LineWidth,label = 'sin')
 plt.plot(x, y2, '-b', linewidth=LineWidth, label = 'cos')
-plt.xlabel('$x$',fontsize=FontSize,fontname='Times New Roman')
-plt.ylabel('$y$',fontsize=FontSize,fontname='Times New Roman')
+plt.xlabel(r'$x$',fontsize=FontSize,fontname='Times New Roman')
+plt.ylabel(r'$y$',fontsize=FontSize,fontname='Times New Roman')
 
 # Set ticks and size
 plt.xticks(np.arange(-1,8,1),size=FontSize)
 plt.yticks(size=FontSize)
 
 # adjust figure size (slim or long)
-plt.title('A plot example',fontsize=FontSize)
+plt.title(r'A plot example',fontsize=FontSize)
 
 # Add text
 plt.text(3, 0.5, "Text", size=FontSize, rotation=0,color='k')
