@@ -28,9 +28,9 @@ axs[idx].grid(True, which='major', linewidth = 0.2) # Show grid, if u wanna show
 axs[idx].plot(x, y1, 'k', linewidth = LineWidth, label='sin')
 axs[idx].plot(x, y2, 'r', linewidth = LineWidth, label='cos')
 axs[idx].legend(fontsize=FontSize, loc = 'upper left')
-axs[idx].set_title('First Plot',fontsize=FontSize)
-axs[idx].set_xlabel('$x$',fontsize=FontSize,fontname='Times New Roman')
-axs[idx].set_ylabel('$y$',fontsize=FontSize,fontname='Times New Roman')
+axs[idx].set_title(r"First Plot",fontsize=FontSize)
+axs[idx].set_xlabel(r"$x$",fontsize=FontSize,fontname='Times New Roman')
+axs[idx].set_ylabel(r"$y$",fontsize=FontSize,fontname='Times New Roman')
 axs[idx].tick_params(axis='both', which='both', labelsize = FontSize)
 # Set axis limits
 axs[idx].set_xlim(-3.2, 3.2)
@@ -43,11 +43,19 @@ axs[idx].set_yscale('linear')
 idx = 1
 axs[idx].plot(x, y3, 'k', linewidth = LineWidth, label='exp')
 axs[idx].legend(fontsize=FontSize, loc = 'upper left')
-axs[idx].set_title('Second Plot',fontsize=FontSize)
-axs[idx].set_xlabel('$x$',fontsize=FontSize,fontname='Times New Roman')
-axs[idx].set_ylabel('$y$',fontsize=FontSize,fontname='Times New Roman')
+axs[idx].set_title(r"Second Plot", fontsize=FontSize)
+axs[idx].set_xlabel(r"$x$",fontsize=FontSize,fontname='Times New Roman')
+axs[idx].set_ylabel(r"$y$",fontsize=FontSize,fontname='Times New Roman')
 axs[idx].set_xlim(-3.2, 3.2)
 axs[idx].set_ylim(0, 1.2)
+# add texts
+axs[idx].text(
+    0.05, 0.95,              # x, y position in axes coordinates
+    r"$\mathrm{Sample\ Text}$",
+    transform=axs[idx].transAxes,
+    fontsize=FontSize,
+    verticalalignment='top'
+)
 
 plt.xticks(size=FontSize)
 plt.yticks(size=FontSize)

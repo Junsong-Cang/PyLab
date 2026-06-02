@@ -53,10 +53,11 @@ plt.legend(fontsize=FontSize,loc = 'lower left')
 # Set axsi limits
 plt.xlim([-1,7])
 plt.ylim([-1.2,1.2])
-plt.tight_layout()
 
 # Save plot to a file
-plt.savefig('/Users/cangtao/Desktop/tmp.pdf')
+#plt.tight_layout()
+#plt.savefig('/Users/cangtao/Desktop/tmp.pdf')
+plt.savefig('/Users/cangtao/Desktop/tmp.pdf', bbox_inches = 'tight') # Use this if you don't wanna use plt.tight_layout()
 # plt.show()
 
 # Some more additional notes if u want to customize grids
