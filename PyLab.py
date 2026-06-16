@@ -2250,6 +2250,8 @@ def distribute_MPI_Jobs(n_jobs, mpi_size, mpi_rank):
     mpi_rank:
         Current MPI rank
     '''
+    if mpi_size == 1:
+        return np.arange(0, n_jobs)
     dn = int(n_jobs/mpi_size)
     dns = dn*np.ones(mpi_size)
     if n_jobs < mpi_size:

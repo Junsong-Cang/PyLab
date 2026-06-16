@@ -35,8 +35,8 @@ c=ax.pcolor(x, y, z,cmap='jet', norm = LogNorm(vmin=z.min(), vmax=z.max()))
 # Use this for linear colorbar:
 # c=ax.pcolor(x, y, z,cmap='jet')
 
-plt.xlabel('$x$',fontsize=FontSize,fontname='Times New Roman')
-plt.ylabel('$y$',fontsize=FontSize,fontname='Times New Roman')
+plt.xlabel(r"$x$",fontsize=FontSize,fontname='Times New Roman')
+plt.ylabel(r"$y$",fontsize=FontSize,fontname='Times New Roman')
 plt.xscale('log')
 
 plt.xticks(size=FontSize)
@@ -51,10 +51,15 @@ plt.yticks(size=FontSize)
 # fig.colorbar(c, ax=ax,label='$\sigma$')
 
 clb = plt.colorbar(c)
-clb.ax.set_title('$z$')
+clb.ax.set_title(r"$z$")
 
 contours = plt.contour(x, y, z, levels=[1e-10, 1e-2], colors=['k','w'])
-plt.title('A plot example',fontsize=FontSize)
+plt.title(r"A plot example", fontsize=FontSize)
 
-plt.tight_layout()
-plt.savefig('/Users/cangtao/Desktop/tmp.png',dpi=200)
+#plt.savefig('/Users/cangtao/Desktop/tmp.pdf')
+plt.savefig('/Users/cangtao/Desktop/tmp.pdf', bbox_inches = 'tight') # Use this if you don't wanna use plt.tight_layout()
+# Or if you want png, jpg, etc:
+# plt.savefig('/Users/cangtao/Desktop/tmp.png',dpi=200)
+
+# plt.show()
+

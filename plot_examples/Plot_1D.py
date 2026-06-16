@@ -30,8 +30,8 @@ plt.plot(x, y1, '-k', linewidth=LineWidth, label = 'sin')
 # or you can use:
 # plt.plot(x,y1,color = 'k',linestyle='-',linewidth=LineWidth,label = 'sin')
 plt.plot(x, y2, '-b', linewidth=LineWidth, label = 'cos')
-plt.xlabel(r'$x$',fontsize=FontSize,fontname='Times New Roman')
-plt.ylabel(r'$y$',fontsize=FontSize,fontname='Times New Roman')
+plt.xlabel(r"$x$",fontsize=FontSize,fontname='Times New Roman')
+plt.ylabel(r"$y$",fontsize=FontSize,fontname='Times New Roman')
 
 # Set ticks and size
 plt.xticks(np.arange(-1,8,1),size=FontSize)
