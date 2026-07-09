@@ -56,8 +56,8 @@ clb.ax.set_title(r"$z$")
 contours = plt.contour(x, y, z, levels=[1e-10, 1e-2], colors=['k','w'])
 plt.title(r"A plot example", fontsize=FontSize)
 
-#plt.savefig('/Users/cangtao/Desktop/tmp.pdf')
-plt.savefig('/Users/cangtao/Desktop/tmp.pdf', bbox_inches = 'tight') # Use this if you don't wanna use plt.tight_layout()
+plt.tight_layout()
+plt.savefig('/Users/cangtao/Desktop/tmp.pdf')
 # Or if you want png, jpg, etc:
 # plt.savefig('/Users/cangtao/Desktop/tmp.png',dpi=200)
 

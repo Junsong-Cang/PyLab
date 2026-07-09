@@ -37,7 +37,7 @@ plt.ylabel(r"$y$",fontsize=FontSize,fontname='Times New Roman')
 plt.xticks(np.arange(-1,8,1),size=FontSize)
 plt.yticks(size=FontSize)
 
-# adjust figure size (slim or long)
+# Add title
 plt.title(r'A plot example',fontsize=FontSize)
 
 # Add text
@@ -55,9 +55,9 @@ plt.xlim([-1,7])
 plt.ylim([-1.2,1.2])
 
 # Save plot to a file
-#plt.tight_layout()
-#plt.savefig('/Users/cangtao/Desktop/tmp.pdf')
-plt.savefig('/Users/cangtao/Desktop/tmp.pdf', bbox_inches = 'tight') # Use this if you don't wanna use plt.tight_layout()
+plt.tight_layout()
+plt.savefig('/Users/cangtao/Desktop/tmp.pdf')
+# plt.savefig('/Users/cangtao/Desktop/tmp.pdf', bbox_inches = 'tight') # Use this if you don't wanna use plt.tight_layout()
 # plt.show()
 
 # Some more additional notes if u want to customize grids

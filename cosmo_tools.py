@@ -1321,6 +1321,9 @@ def Read_p21c_cache(path, z, field = 'Tb', result_type = 'box'):
         head = 'HaloField_'
     elif field == 'DM_Boost':
         head, name = 'TsBox_', 'TsBox/Boost_box'
+    elif field == 'Tk':
+        head, name = 'TsBox_', '/TsBox/Tk_box'
+        
     if field == 'Tb' or result_type == 'redshift': head = 'BrightnessTemp_'
     Files = os.listdir(path)
     FL = []
@@ -1345,7 +1348,9 @@ def Read_p21c_cache(path, z, field = 'Tb', result_type = 'box'):
     else:
         dif = np.abs(z - zax)
         idx = np.argmin(dif)
-        if dif[idx] > 1E-2: raise Exception('Cannot find requested file from cache')
+        if dif[idx] > 1E-2:
+            print('zax = ', len(zax), np.sort(zax)[::-1])
+            raise Exception("Cannot find requested file from cache, input z = {:.5f}, best match z = {:.5f}, min_dif = {:.5E}".format(z, zax[idx], np.min(dif)))
         # Reading data
         file = FL[idx]
         if result_type == 'file': 
