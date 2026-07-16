@@ -327,16 +327,15 @@ def UVLF(M1 = -22,
 def Radio_Temp_Astro(
     fR = 3162.27,
     aR = 0.7,
-    nz = 100,
     zcut = 17,
     z_ax = np.linspace(5, 30, 100),
-    SFRD_ax = np.logspace(-1, -8.64, 100)):
+    SFRD_ax = np.logspace(-1, -8.64, 100),
+    nz = 10000):
     '''
     Get Radio Temp for astrophysical sources
     ---- Inputs ----
     fR : fR
     aR : power-index
-    nz : number of z bins in which you want Tradio, default is between min(z_ax) and max(z_ax)
     zcut : turn off radio emission below this
     z_ax : axis for z in SFRD_ax
     SFRD_ax : SFRD in Msun/yr/Mpc^3
@@ -363,18 +362,18 @@ def Radio_Temp_Astro(
     H = Hubble(z_new)
     xp = np.log(1+z_new)
     F = SFRD_SI/H/(pow(1+z_new, aR))
-
-    z = np.linspace(zmin, zmax, nz)
+    
+    zax_out = np.linspace(zmin, zmax, nz)
     T = np.zeros(nz)
 
     for idx in np.arange(0, nz):
-        z_ = z[idx]
+        z_ = zax_out[idx]
         f = fR * pow(1+z_, 3+aR) * Prefix * F
         f = f * np.heaviside(z_new - z_, 0)
         f = f * np.heaviside(z_new - zcut, 0)
         T[idx] = np.trapz(y = f, x = xp)
 
-    return z, T
+    return zax_out, T
 
 def Flat_Gaussian(
         a21 = 0.53,
