@@ -354,13 +354,18 @@ def Radio_Temp_Astro(
     zmax = np.max(z_ax)
 
     z_new = np.linspace(zmin, zmax, 10000)
-    SFRD_new = np.interp(z_new, z_ax, SFRD_ax)
+    if z_ax[0] > z_ax[-1]:
+        SFRD_new = np.interp(z_new, z_ax[::-1], SFRD_ax[::-1], left=np.nan, right=np.nan)
+    else:
+        SFRD_new = np.interp(z_new, z_ax, SFRD_ax, left=np.nan, right=np.nan)
+        
     SFRD_SI = SFRD_new * Msun / Yr / pow(Mpc, 3)
     H = Hubble(z_new)
-    z = np.linspace(zmin, zmax, nz)
-    T = np.zeros(nz)
     xp = np.log(1+z_new)
     F = SFRD_SI/H/(pow(1+z_new, aR))
+
+    z = np.linspace(zmin, zmax, nz)
+    T = np.zeros(nz)
 
     for idx in np.arange(0, nz):
         z_ = z[idx]
