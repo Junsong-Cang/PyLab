@@ -35,10 +35,16 @@ Some useful functions
 - Read_MultiNest_BestFit
 - Read_MultiNest_Stats
 - h5disp
+- count_stats_1D
+- count_stats_2D
+- distribute_MPI_Jobs
+- clean_multinest_cache
+- show_time
+- Join_Pics
 '''
 
 import numpy as np
-import shutil, os, time, warnings, h5py
+import shutil, os, time, warnings, h5py, tqdm
 from scipy.interpolate import InterpolatedUnivariateSpline as spline
 from joblib import Parallel, delayed
 from PIL import Image
@@ -46,10 +52,6 @@ from scipy import interpolate
 import scipy
 import matplotlib.pyplot as plt
 import scipy.stats
-try:
-    import tqdm
-except:
-    pass
 try:
     import getdist
 except:
@@ -2276,3 +2278,62 @@ def show_time():
     In a ipython notebook it can be hard to know whether a module has been executed or the output is from previous run
     '''
     print('Time now:', time.strftime("%Y-%m-%d %H:%M", time.localtime()))
+
+def Join_Pics(
+        files = ['a.jpg', 'b.jpg'],
+        path = None,
+        output_file = '/Users/cangtao/Desktop/tmp.png',
+        width = None):
+    '''
+    Join pictures
+    ---- inputs ----
+    files:
+        List of file names
+    path:
+        Path of pic files, set to None if files are provided with absolute paths already
+    output_file:
+        output file name
+    width:
+        width of pic, default is the max width of files, but this lead to over-sized file, so to reduce size you are recommended to specify your own width
+    '''
+    # Need register_heif_opener to open HEIC photo file from e.g., iphone
+    from pillow_heif import register_heif_opener
+    register_heif_opener()
+    def resize_to_width(img, w):
+        if img.width == w:
+            return img
+        new_height = int(img.height * w / img.width)
+        return img.resize((w, new_height), Image.Resampling.LANCZOS)
+    
+    if (not path is None) and (files[0][0]=='/'):
+        raise Exception("Do not specify absolute files if path is given")
+    nf = len(files)
+    IMGs = []
+    img_width = []
+    for idx in np.arange(0, nf):
+        f = files[idx]
+        if not path is None:
+            f = path + f
+        IMG = Image.open(f)
+        IMGs.append(IMG)
+        img_width.append(IMG.width)
+    if width is None:
+        target_width = np.max(np.array(img_width))
+    else:
+        target_width = width
+
+    # Resize
+    height = 0
+    for idx in np.arange(0, nf):
+        IMGs[idx] = resize_to_width(IMGs[idx], target_width)
+        height += IMGs[idx].height
+    
+    result = Image.new("RGB", (target_width, height))
+
+    # Join them
+    idx_h = 0
+    for idx in np.arange(0, nf):
+        IMG = IMGs[idx]
+        result.paste(IMG, (0, idx_h))
+        idx_h += IMG.height
+    result.save(output_file)
