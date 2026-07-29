@@ -52,10 +52,8 @@ except:
     pass
 try:
     import getdist
-    from getdist import plots
 except:
     pass
-from matplotlib.backend_bases import MouseEvent
 
 # First let's define some exceptions
 class PyLab_Solve_Exception_Small(Exception):
@@ -1450,7 +1448,7 @@ def derived_param_chains(
         write latex names using infos in derived_names
     show_status : whether or not to show status
     '''
-    
+    from getdist import plots
     t1 = time.time()
     CF0 = old_root + '.txt'
     chain_0 = np.loadtxt(CF0)
