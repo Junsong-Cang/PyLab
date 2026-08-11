@@ -2310,7 +2310,8 @@ def Join_Pics(
     nf = len(files)
     IMGs = []
     img_width = []
-    for idx in np.arange(0, nf):
+    # for idx in np.arange(0, nf):
+    for idx in tqdm.tqdm(range(nf), desc = 'Reading IMG'):
         f = files[idx]
         if not path is None:
             f = path + f
@@ -2324,7 +2325,8 @@ def Join_Pics(
 
     # Resize
     height = 0
-    for idx in np.arange(0, nf):
+    #for idx in np.arange(0, nf):
+    for idx in tqdm.tqdm(range(nf), desc = 'Re-sizing IMG'):
         IMGs[idx] = resize_to_width(IMGs[idx], target_width)
         height += IMGs[idx].height
     
@@ -2332,7 +2334,8 @@ def Join_Pics(
 
     # Join them
     idx_h = 0
-    for idx in np.arange(0, nf):
+    #for idx in np.arange(0, nf):
+    for idx in tqdm.tqdm(range(nf), desc = 'Joining IMG'):
         IMG = IMGs[idx]
         result.paste(IMG, (0, idx_h))
         idx_h += IMG.height
