@@ -21,7 +21,6 @@ Some useful functions
 - Interp_2D
 - Within_Range
 - Get_dydx
-- show_status_info
 - SaySomething
 - HyRec
 - Trim_Axis : get same x or y axis
@@ -357,7 +356,6 @@ def mcmc_derived_stat(
     
     if ncpu == 1:
         for pid in np.arange(0, n_deriv):
-            show_status_info(idx = pid, n = n_deriv, nx = 50, name = 'get_derived_stat_vec', show_status = print_status)
             swap = get_new_samples(pid)
             r[0:5, pid] = swap[:]
     else:
@@ -1469,7 +1467,6 @@ def derived_param_chains(
     
     def Get_New_Samples(idx):
         # Get derived params for a given index in active param
-        # show_status_info(idx, chain_len, 1000, name = 'derived_param_chains', show_status = show_status)
         param = ActiveParams[idx]
         r = model(param)
         return r
@@ -1478,12 +1475,10 @@ def derived_param_chains(
         # DerivedSamples = np.zeros((chain_len, n_deriv))
         if n_deriv == 1:
             DerivedSamples = np.zeros(chain_len)
-            #for idx in np.arange(0, chain_len):
             for idx in tqdm.tqdm(range(chain_len), desc = 'Computing sampels', disable = not show_status):
                 DerivedSamples[idx] = Get_New_Samples(idx)
         else:
             DerivedSamples = np.zeros((chain_len, n_deriv))
-            # for idx in np.arange(0, chain_len):
             for idx in tqdm.tqdm(range(chain_len), desc = 'Computing sampels', disable = not show_status):
                 NewSample = Get_New_Samples(idx)
                 for pid in np.arange(0, n_deriv):
@@ -1517,13 +1512,7 @@ def derived_param_chains(
     RF0 = old_root + '.ranges'
     RF1 = NewRoot + '.ranges'
     shutil.copy(RF0, RF1)
-    
-    '''
-    if derived_names != None:
-        if len(derived_names) != n_deriv:
-            warnings.warn('length of derived_names does not match length of derived parameters, using default settings for param names')
-    '''
-    
+        
     if n_deriv == 1:
         if write_names:
             nf=open(NF1,'a')
@@ -1821,29 +1810,6 @@ def Read_Curve_GUI(
             warnings.warn('Read_Curve_GUI: Unable to save comparison plot')
     np.savez(OutputFile, x = x, y = y)
     return x,y
-    
-def show_status_info(idx, n, nx, name = ' ', show_status = 0):
-    '''
-    Show status in a loop
-    idx : current index
-    n : total loop number
-    nx : How many times to show report
-    name : additional note, e.g. who is calling this report
-    show_status : whether to show report
-    '''
-    if show_status:
-        dn = int(np.floor(n/nx))
-        dn = max(1, dn)
-        if nx < 100:
-            fmt = "{:.2f}"
-        elif nx < 1000:
-            fmt = "{:.3f}"
-        elif nx < 10000:
-            fmt = "{:.4f}"
-        else:
-            fmt = "{:0.6f}"
-        if idx%dn == 0:
-            print(name, 'status: ',  fmt.format(idx/n))    
 
 def Resize_chains(
         Old_Root = '/Users/cangtao/cloud/GitHub/Radio_Excess_EDGES/data/29_MCG_HII_50/29_MCG_HII_50_', 
