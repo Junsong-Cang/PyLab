@@ -11,6 +11,8 @@ y = np.sin(x)
 f = h5py.File(file, 'w')
 f.create_dataset('dataset_x', data = x)
 f.create_dataset('dataset_y', data = y, dtype = 'float32') # can set precision
+# Save attributes, need to create dataset first
+f['dataset_x'].attrs['note'] = 'Hello World!'
 f.close()
 
 # ----load data----
