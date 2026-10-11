@@ -3,14 +3,12 @@ Some useful python functions fro 21cmFAST related calculations, to be able to us
 export PYTHONPATH=Current_Path:${PYTHONPATH}
 Functions:
     Hubble
-    compute_power
     PowerSpectra_Coeval_Kernel
     HMF
     MUV2Mh
     SFRD
     UVLF
     Radio_Temp_Astro
-    Get_P21c_Coeval_cache_PS : get PS from p21c coeval cache
 '''
 
 import numpy as np
@@ -50,93 +48,6 @@ def Hubble(z=0, OmM = 0.30964168161, h = 0.6766, OmR = 9.1E-5):
     zp4 = pow(1+z, 4)
     r = H0 * np.sqrt(OmL + OmM * zp3 + OmR * zp4)
     return r
-
-def PowerSpectra_Coeval_Kernel(
-        Field = 0, 
-        nk = 50,
-        Use_LogK = True, 
-        DataFile = '/Volumes/18810925771/21cmFAST-data/cache/BrightnessTemp_ff5ac1057fff286fb047bfeb950cbb84_r64301115523.h5'):
-    '''
-    Calculate Power Spectra for LightCone object
-    ---- Inputs ----
-        Field: Choose quantities
-            0 - Tb
-            1 - Tk
-            2 - xH
-            3 - xe
-            4 - Tr
-            5 - Boost
-            6 - Density
-        nk : number of k bins
-        Use_LogK : Use log k-bin
-        DataFile: File name for Power spectra
-    '''
-    FieldNames = ['BrightnessTemp/brightness_temp', #0 - Tb
-                  'TsBox/Tk_box', #1 - Tk
-                  'IonizedBox/xH_box', #2 - xH, Incorrect field
-                  'TsBox/x_e_box', #3 - xe
-                  'TsBox/Trad_box', #4 - tr
-                  'TsBox/Boost_box', #5 - Boost
-                  'PerturbedField/density', #6 - density
-                  ]
-    f = h5py.File(DataFile, 'r')
-    BOX_LEN = f['user_params'].attrs['BOX_LEN']
-    Box = f[FieldNames[Field]]
-    Pk, k = compute_power(
-        box = Box,
-        length = (BOX_LEN,BOX_LEN,BOX_LEN),
-        log_bins = Use_LogK,
-        nk = nk,
-        ignore_kperp_zero = True,
-        ignore_kpar_zero = False,
-        ignore_k_zero = True)
-    Ps=Pk * k ** 3 / (2 * np.pi ** 2)
-    # remove nan
-    nan_mask = ~np.isnan(Ps)
-    k = k[nan_mask]
-    Ps = Ps[nan_mask]
-    f.close()
-    return k, Ps
-    
-def compute_power(
-   box,
-   length,
-   nk,
-   log_bins = True,
-   ignore_kperp_zero = True,
-   ignore_kpar_zero = False,
-   ignore_k_zero = True,
-):
-    # Determine the weighting function required from ignoring k's.
-    k_weights = np.ones(box.shape, dtype=int)
-    n0 = k_weights.shape[0]
-    n1 = k_weights.shape[-1]
-
-    if ignore_kperp_zero:
-        k_weights[n0 // 2, n0 // 2, :] = 0
-    if ignore_kpar_zero:
-        k_weights[:, :, n1 // 2] = 0
-    if ignore_k_zero:
-        k_weights[n0 // 2, n0 // 2, n1 // 2] = 0
-
-    res = get_power(
-        box,
-        boxlength=length,
-        bins=nk,
-        bin_ave=False,
-        get_variance=False,
-        log_bins=log_bins,
-        k_weights=k_weights,
-    )
-
-    res = list(res)
-    k = res[1]
-    if log_bins:
-        k = np.exp((np.log(k[1:]) + np.log(k[:-1])) / 2)
-    else:
-        k = (k[1:] + k[:-1]) / 2
-    res[1] = k
-    return res
 
 def HMF(z=0,
         model = 1,
@@ -380,8 +291,7 @@ def Flat_Gaussian(
         v0 = 78.3,
         t = 6.5,
         w = 20.7,
-        v = np.linspace(50, 100, 130),
-        ):
+        v = np.linspace(50, 100, 130)):
     '''
     Flattened Gaussian T21 profile (in K)
     default params are the ones obtained in B18
@@ -651,7 +561,7 @@ def fcoll_function(
         if mmin_model == 0:
             Mmin = 1E8 * (Tvir/2E4)**1.5 * ((1+z_)/10)**-1.5
         elif mmin_model == 1:
-            tmp, Tk = PL.LCDM_HyRec(z = z_, Use_EoR = Use_EoR)
+            tmp, Tk = LCDM_HyRec(z = z_, Use_EoR = Use_EoR)
             Mmin = 1.3e3 * (10/(1+z_))**1.5 * Tk**1.5
         elif mmin_model == 2:
             Mmin = mmin
@@ -818,284 +728,6 @@ def get_lc_redshifts(lc):
     for idx in np.arange(0, nz):
         z[idx] = d2z(d[idx])
     return z
-
-def Get_P21c_Coeval_cache_PS(path, cleanup, nk, output_file = None, field=0, show_status = 0):
-    '''
-    Get PS from cached coevals
-    -- inputs --
-        path : path where cached coevals are stored, must all be for the same p21c params
-        cleanup : delete things inside cache path after use?
-            0 - don't delete
-            1 - delete ALL
-            2 - keep Tb boxes and delete the rest
-        nk : number of k bins
-        output_file : where (npz or h5) to store PS
-        Field: Choose quantities
-            0 - Tb
-            1 - Tk
-            2 - xH
-            3 - xe
-            4 - Tr
-            5 - Boost
-            6 - Density
-    '''
-    FL = []
-    Files = os.listdir(path)
-    Heads = ['Bri', #0 - Tb
-             'TsB', #1 - Tk
-             'Ion', #2 - xH
-             'TsB', #3 - xe
-             'TsB', #4 - Tr
-             'TsB', #5 - Boost
-             'Per', #6 - density
-             ]
-    for file in Files:
-        Head = file[0]+file[1]+file[2]
-        Tail = file[-3]+file[-2]+file[-1]
-        if Head == Heads[field] and Tail == '.h5':
-            FL.append(path+file)
-    zax = []
-    PS_ax = []
-    #for fid, file in enumerate(FL):
-    for fid in tqdm.tqdm(range(len(FL)), desc = 'Computing Coeval PS', disable = not show_status):
-        file = FL[fid]
-        if fid==0:
-            k, PS = PowerSpectra_Coeval_Kernel(Field=field,nk=nk, Use_LogK=True, DataFile=file)
-        else:
-            k_, PS = PowerSpectra_Coeval_Kernel(Field=field,nk=nk, Use_LogK=True, DataFile=file)
-            # Do some additional checks to ensure that k_ is the same as k
-            if np.sum(np.abs(k-k_)) > 1e-20:
-                raise Exception('Some coeval PS has different k')
-        PS_ax.append(PS)
-        with h5py.File(file, 'r') as f:
-            zax.append(f.attrs['redshift'])
-    # Sort PS
-    zax = np.array(zax)
-    PS_ax = np.array(PS_ax)
-    sorted_idx = np.argsort(zax)
-    zax = zax[sorted_idx]
-    PS_ax = PS_ax[sorted_idx, :]
-    
-    # Now save results to file
-    if not output_file is None:
-        if output_file[-1] == 'z':
-            # npz file
-            np.savez(output_file, z=zax, k = k, ps=PS_ax)
-        else:
-            # h5 file
-            f = h5py.File(output_file, 'w')
-            f.create_dataset('Coeval_Power_Spectrum/z', data = zax)
-            f.create_dataset('Coeval_Power_Spectrum/k', data = k)
-            f.create_dataset('Coeval_Power_Spectrum/PS', data =PS_ax)
-            f.close()
-    
-    # now cleanup
-    if cleanup == 1:
-        for file in Files:
-            try:
-                os.remove(path+file)
-            except:
-                pass
-    elif cleanup == 2:
-        for file in Files:
-            Head = file[0]+file[1]+file[2]
-            Tail = file[-3]+file[-2]+file[-1]
-            if Tail == '.h5':
-                if not Head == 'Bri':
-                    os.remove(path+file)
-    result = {'z': zax, 'k' : k, 'ps' : PS_ax}
-    return result
-
-def Get_p21c_lc_cube_redshifts(lc):
-    '''
-    Find z axis from p21c lc that can form cube, needed for LC PS modules
-    '''
-    z_ax = lc.lightcone_redshifts
-    d = lc.lightcone_distances
-    BOX_LEN=lc.user_params.BOX_LEN
-    d1 = np.min(d) + BOX_LEN/2
-    d2 = np.max(d) - BOX_LEN/2
-    idx1 = np.argmin(np.abs(d1 - d))
-    idx2 = np.argmin(np.abs(d2 - d))
-    # Above are nearest, remove overflow
-    z = z_ax[idx1+1:idx2-1]
-    return z
-
-def Get_p21c_PSk_Kernel(
-    lc,
-    z=10, 
-    field = 0, 
-    nk = 30):
-    '''
-    Get PS as a function of k from p21c lightcone
-    result is for closest z so further interpolation is needed if we are serious
-    -- Inputs --
-    z : redshift
-    H5File : H5 file containing the LC
-    lc : p21c lightcone, cannot set default without inducing errors for machines without lc h5, but an example is
-        lc = p21c.LightCone.read('/Users/cangtao/Desktop/21cmFAST-data/Radio_Paper/Fiducial.h5')
-    field : lightcone quantities
-        0 - Tb
-        1 - Tk
-        2 - xH
-        3 - xe
-        4 - Tr
-        5 - Boost
-        6 - Density
-    '''
-    z_ax = lc.lightcone_redshifts
-    nearest_idx = np.argmin(np.abs(z-z_ax))
-    z_out = z_ax[nearest_idx] # closest match
-    d = lc.lightcone_distances
-    xc = d[nearest_idx]
-    BOX_LEN=lc.user_params.BOX_LEN
-    
-    # Make sure the chunk is close to a cube
-    x1 = xc - BOX_LEN/2
-    x2 = xc + BOX_LEN/2
-    z_cube_ax = Get_p21c_lc_cube_redshifts(lc)
-    zmin, zmax = np.min(z_cube_ax), np.max(z_cube_ax)
-
-    if z_out < zmin or z_out > zmax:
-        raise P21c_PS_overflow(z, zmin, zmax)
-    
-    if field == 0:
-        box = lc.brightness_temp
-    elif field == 1:
-        box = lc.Tk_box
-    elif field == 2:
-        box = lc.xH_box
-    elif field == 3:
-        box = 1.0 - lc.xH_box
-    elif field == 4:
-        box = lc.Trad_box
-    elif field == 5:
-        box = lc.Boost_box
-    elif field == 6:
-        box = lc.density
-    idx1 = np.argmin(np.abs(d-x1))
-    idx2 = np.argmin(np.abs(d-x2))
-    chunklen = (idx2 - idx1) * lc.cell_size
-    ps0, k0 = compute_power(
-            box = box[:, :, idx1:idx2],
-            length = (BOX_LEN, BOX_LEN, chunklen),
-            nk = nk,
-            log_bins = True)
-    # Remove nan
-    k = []
-    ps = []
-    for idx, ps_ in enumerate(ps0):
-        if not np.isnan(ps_):
-            k.append(k0[idx])
-            ps.append(ps_)
-    # Dimensionless PS
-    ps = np.array(ps)
-    k = np.array(k)
-    ps = ps * k ** 3 / (2 * np.pi ** 2)
-    r = {'k':k, 'ps':ps, 'z_out':z_out}
-    return r
-
-def Get_P21c_PS(
-    H5File = '/Users/cangtao/Desktop/21cmFAST-data/Radio_Paper/Template.h5', 
-    nz = 30,
-    k = 0.5,
-    nk = 30,
-    field = 0,
-    output_file = '/tmp/tmp.npz',
-    show_status = 0):
-    '''
-    Get PS(z) from p21c LC, z range is set automatically ensuring each chunk is a cube
-    -- inputs --
-    H5File : H5 file for the LC
-    k : k in Mpc^{-1}
-    nk : number of k bins
-    nz : number of z bins
-    field : lightcone quantities
-        0 - Tb
-        1 - Tk
-        2 - xH
-        3 - xe
-        4 - Tr
-        5 - Boost
-        6 - Density
-    '''
-    lc = p21c.LightCone.read(H5File)
-    z_cube_ax = Get_p21c_lc_cube_redshifts(lc)
-    zmin, zmax = np.min(z_cube_ax), np.max(z_cube_ax)
-    idx1 = PL.Find_Index(x=zmin, x_axis=z_cube_ax)
-    idx2 = PL.Find_Index(x=zmax, x_axis=z_cube_ax) + 1
-    dn = int(np.floor((idx2 - idx1)/nz))
-    z_ax = z_cube_ax[idx1:idx2:dn]
-    nz_ = len(z_ax)
-    for idx in tqdm.tqdm(range(len(z_ax)), desc = 'Computing lightcone PS', disable = not show_status):
-        z = z_ax[idx]
-        r = Get_p21c_PSk_Kernel(z=z,field=field,nk=nk,lc=lc)
-        # k should be all the same
-        if idx == 0:
-            k_ax = r['k']
-            nk_ = len(k_ax)
-            PS_ax = np.zeros([nz_, nk_])
-        k_ax_ = r['k']
-        if np.sum(np.abs(k_ax - k_ax_)) > 1e-40:
-            print('Something is wrong with k')
-        PS_ax[idx, :] = r['ps'][:]
-    # 2D finished, saving data
-    if not output_file==None:
-        np.savez(output_file, z=z_ax, k=k_ax, ps=PS_ax)
-    
-    # Now interpolate for 1D to get Ps(z)
-
-    idx1 = PL.Find_Index(k, k_ax)
-    idx2 = idx1+1
-    x = np.log10(k)
-    x1 = np.log10(k_ax[idx1])
-    x2 = np.log10(k_ax[idx2])
-    y1 = np.log10(PS_ax[:, idx1])
-    y2 = np.log10(PS_ax[:, idx2])
-    # we are interpolating in log and we don't 0 to become -inf
-    y1[y1 < -150] = -150
-    y2[y2 < -150] = -150
-    LPS = (y2 - y1)*(x - x1)/(x2 - x1) + y1
-    psz = 10**LPS
-    result = {'z' : z_ax, 'psz': psz,
-              'ps_2D' : PS_ax, 'k_ax' : k_ax}
-    return result
-
-def Read_P21c_PS2D(FixZ=0, z=10, k=0.1, npz_file='/tmp/tmp.npz'):
-    '''
-    Read ps as a function of z or k for 2D ps generated by Get_P21c_PS or Get_P21c_Coeval_cache_PS
-    '''
-    d = np.load(npz_file)
-    z_ax = d['z']
-    k_ax = d['k']
-    PS_ax = d['ps']
-    
-    if FixZ:
-        idx1 = PL.Find_Index(z,z_ax)
-        idx2 = idx1 + 1
-        z1 = z_ax[idx1]
-        z2 = z_ax[idx2]
-        y1 = np.log10(PS_ax[idx1,:])
-        y2 = np.log10(PS_ax[idx2,:])
-        y1[y1<-150] = -150
-        y2[y2<-150] = -150
-        y = (y2-y1)*(z-z1)/(z2-z1)+y1
-        ps = 10**y
-        return k_ax, ps
-    else:
-        lk_ax = np.log10(k_ax)
-        x = np.log10(k)
-        idx1 = PL.Find_Index(k,k_ax)
-        idx2 = idx1 + 1
-        x1 = lk_ax[idx1]
-        x2 = lk_ax[idx2]
-        y1 = np.log10(PS_ax[:, idx1])
-        y2 = np.log10(PS_ax[:, idx2])
-        y1[y1<-150] = -150
-        y2[y2<-150] = -150
-        y = (y2-y1)*(x-x1)/(x2-x1)+y1
-        ps = 10**y
-        return z_ax, ps
 
 def PS2D_2_PS1D(
         kpe,
@@ -1302,6 +934,70 @@ def Compute_nd_PS_t21c(
         out['ps1d'] = PS
         out['k1d'] = kbins_1D
     return out
+
+def Compute_nd_PS_PowerBox(
+    box,
+    box_length = [np.nan, np.nan, np.nan],
+    k1d = np.logspace(-1.7, 0.5, 40),
+    log_bins = True):
+    '''
+    Like Compute_nd_PS_t21c but using powerbox, adapted from the p21c doc using default settings
+    ---- inputs ----
+    box : 3D box array for which you want the PS
+    box_length : length of box, list or array of form [BOX_LEN_1, BOX_LEN_2, BOX_LEN_3]
+    k1d : array, k bin centers for 1D PS
+    '''
+    ignore_kperp_zero=True # p21c default is True, if set to false the results are identical to tools21cm
+    ignore_kpar_zero=False # p21c default
+    ignore_k_zero=False # p21c default
+
+    def Find_k_bins(k_center):
+        nk = len(k_center)
+        x = np.log(k_center)
+        dxs = np.mean(x[1:nk] - x[0:nk-1])
+        dx = np.mean(dxs)
+        dx_dif_max = np.max(np.abs(1-dx/dxs))
+        if dx_dif_max > 1E-10:
+            raise Exception("Error: current version only support log-spaced k")
+        x1 = x[0] - dx/2
+        x2 = x[-1] + dx/2
+        new_x = np.linspace(x1, x2, nk+1)
+        k_bins = np.exp(new_x)
+        return k_bins
+    
+    # Determine the weighting function required from ignoring k's.
+    k_weights = np.ones(box.shape, dtype=int)
+    n0 = k_weights.shape[0]
+    n1 = k_weights.shape[-1]
+
+    if ignore_kperp_zero:
+        k_weights[n0 // 2, n0 // 2, :] = 0
+    if ignore_kpar_zero:
+        k_weights[:, :, n1 // 2] = 0
+    if ignore_k_zero:
+        k_weights[n0 // 2, n0 // 2, n1 // 2] = 0
+
+    res = get_power(
+        box,
+        boxlength=box_length,
+        bins=Find_k_bins(k1d),
+        bin_ave=False,
+        get_variance=False,
+        log_bins=log_bins,
+        k_weights=k_weights,
+    )
+    res = list(res)
+    k = res[1]
+    if log_bins:
+        k = np.exp((np.log(k[1:]) + np.log(k[:-1])) / 2)
+    else:
+        k = (k[1:] + k[:-1]) / 2
+    k_dif = np.abs(1-k/k1d)
+    if np.max(k_dif) > 1E-5:
+        raise Exception('k input and outputs are different')
+    ps = res[0] * k1d**3 / (2 * np.pi**2)
+    return ps
+    
 
 def Read_p21c_cache(path, z, field = 'Tb', result_type = 'box'):
     '''

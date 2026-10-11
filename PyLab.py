@@ -1469,7 +1469,7 @@ def Read_Curve_GUI(
         x2 = 100,
         y1 = 1e-3,
         y2 = 1e2,
-        IMG_File = '/Users/cangtao/cloud/Library/PyLab/data/Read_Curve_GUI_Example.png',
+        IMG_File = '/Users/cangtao/Desktop/tmp.png',
         OutputFile = '/tmp/tmp_Read_Curve_GUI_data.npz',
         LogX = False,
         LogY = False,

@@ -17,7 +17,8 @@ plt.rcParams.update({
     'text.latex.preamble': r'\usepackage{newtxtext,newtxmath}'})
 
 fig, ax = plt.subplots()
-ax.grid(True, which='both', linewidth = 0.3)  # `which='both'` enables major and minor grids
+# `which='both'` enables major and minor grids
+ax.grid(True, which='both', linewidth = 0.3)  
 
 # adjust figure width
 fig.set_size_inches(8, 5)
