@@ -2189,7 +2189,7 @@ def Find_Match(
         0 - Do nothing
         1 - Exit if found more than one match
         2 - Exit if found no match
-        3 - Exit unless found only one match
+        >2 - Exit unless found only one match
     '''
     params_shape = np.shape(params)
     n = params_shape[0]
@@ -2209,7 +2209,7 @@ def Find_Match(
             raise Exception("Match count must be 0 or 1, current value = {:.0f}".format(match_count))
         if match_count ==0 and action==2:
             raise Exception("Cannot find match")
-        if action==3:
+        if action>2:
             raise Exception("Cannot find match, or has more than one match, match_count = {:.0f}".format(match_count))
     r = {
         'match': match_count, # How many elements are within tol? If 0, no match found
