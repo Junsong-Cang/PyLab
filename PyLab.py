@@ -2176,3 +2176,45 @@ def Join_Pics(
         result.paste(IMG, (0, idx_h))
         idx_h += IMG.height
     result.save(output_file)
+
+def Find_Match(
+        params,
+        param,
+        tol=1E-50,
+        action = 0):
+    '''
+    Find whether param is in params
+    -- inputs --
+    action: what to do if found no match or found multiple matches
+        0 - Do nothing
+        1 - Exit if found more than one match
+        2 - Exit if found no match
+        3 - Exit unless found only one match
+    '''
+    params_shape = np.shape(params)
+    n = params_shape[0]
+    dim = params_shape[1]
+    dist = np.zeros(n)
+    for idx in np.arange(0, dim):
+        p = param[idx]
+        ps = params[:, idx]
+        dist = dist + (p - ps)**2.0
+    dist = np.sqrt(dist)
+    dist_min = np.min(dist)
+    match_count = len(dist[dist < tol])
+    best_match_idx = np.argmin(dist)
+    best_match_param = params[best_match_idx, :]
+    if action > 0 and (not (match_count == 1)):
+        if match_count > 1 and action==1:
+            raise Exception("Match count must be 0 or 1, current value = {:.0f}".format(match_count))
+        if match_count ==0 and action==2:
+            raise Exception("Cannot find match")
+        if action==3:
+            raise Exception("Cannot find match, or has more than one match, match_count = {:.0f}".format(match_count))
+    r = {
+        'match': match_count, # How many elements are within tol? If 0, no match found
+        'dist_min': dist_min, # Minimum dist
+        'idx':  best_match_idx, # idx of closest element
+        'best_match_param': best_match_param
+        }
+    return r
